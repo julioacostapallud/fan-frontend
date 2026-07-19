@@ -350,237 +350,296 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
         {error && <div className="error-banner">{error}</div>}
 
         <div className="sale-compose">
-          <div className="form-row-2">
-            <FormGroup className="mb-2">
-              <Label className="form-label">Producto</Label>
-              <Input
-                type="select"
-                value={draft.productId}
-                onChange={(e) => {
-                  const product = products.find((p) => p.id === e.target.value);
-                  if (product) selectProduct(product);
-                  else patchDraft({ productId: '', unitPrice: '' });
-                }}
-              >
-                <option value="">Seleccionar…</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Input>
-            </FormGroup>
-            <FormGroup className="mb-2">
-              <Label className="form-label">Motivo / diseño</Label>
-              <MotifCombobox
-                productId={draft.productId}
-                value={draft.motifName}
-                onChange={(motifName) => patchDraft({ motifName })}
-              />
-            </FormGroup>
-          </div>
-
-          <div className="form-row-3">
-            <FormGroup className="mb-2">
-              <Label className="form-label">P. unitario</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.01"
-                value={draft.unitPrice}
-                onChange={(e) => patchDraft({ unitPrice: e.target.value })}
-              />
-            </FormGroup>
-            <FormGroup className="mb-2">
-              <Label className="form-label">Cantidad</Label>
-              <div className="qty-control qty-control-compact">
-                <Button
-                  className="btn-secondary-fan"
-                  onClick={() =>
-                    patchDraft({ quantity: Math.max(1, draft.quantity - 1) })
-                  }
-                >
-                  −
-                </Button>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  value={draft.quantity}
-                  onChange={(e) =>
-                    patchDraft({
-                      quantity: Math.max(1, Number(e.target.value) || 1),
-                    })
-                  }
-                  className="text-center"
-                />
-                <Button
-                  className="btn-secondary-fan"
-                  onClick={() => patchDraft({ quantity: draft.quantity + 1 })}
-                >
-                  +
-                </Button>
+          <section className="sale-card">
+            <header className="sale-card-head">
+              <span className="sale-card-title">
+                {editingKey ? 'Editando artículo' : 'Artículo a cargar'}
+              </span>
+              <span className="sale-card-hint">Producto y diseño</span>
+            </header>
+            <div className="sale-card-body">
+              <div className="form-row-2">
+                <FormGroup className="mb-2">
+                  <Label className="form-label">Producto</Label>
+                  <Input
+                    type="select"
+                    value={draft.productId}
+                    onChange={(e) => {
+                      const product = products.find((p) => p.id === e.target.value);
+                      if (product) selectProduct(product);
+                      else patchDraft({ productId: '', unitPrice: '' });
+                    }}
+                  >
+                    <option value="">Seleccionar…</option>
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </Input>
+                </FormGroup>
+                <FormGroup className="mb-2">
+                  <Label className="form-label">Motivo / diseño</Label>
+                  <MotifCombobox
+                    productId={draft.productId}
+                    value={draft.motifName}
+                    onChange={(motifName) => patchDraft({ motifName })}
+                  />
+                </FormGroup>
               </div>
-            </FormGroup>
-            <FormGroup className="mb-2">
-              <Label className="form-label">Desc. (sobre P.U.)</Label>
-              <div className="discount-inline">
-                <Input
-                  type="select"
-                  value={draft.discountType}
-                  onChange={(e) =>
-                    patchDraft({
-                      discountType: e.target.value as DiscountType,
-                      discountValue:
-                        e.target.value === 'NONE' ? '0' : draft.discountValue,
-                    })
-                  }
-                >
-                  <option value="NONE">No</option>
-                  <option value="FIXED">$</option>
-                  <option value="PERCENTAGE">%</option>
-                </Input>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  max={draft.discountType === 'PERCENTAGE' ? 100 : undefined}
-                  disabled={draft.discountType === 'NONE'}
-                  value={draft.discountType === 'NONE' ? '' : draft.discountValue}
-                  placeholder="0"
-                  onChange={(e) => patchDraft({ discountValue: e.target.value })}
-                />
+
+              <div className="form-row-2">
+                <FormGroup className="mb-2">
+                  <Label className="form-label">Precio unitario</Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="0.01"
+                    value={draft.unitPrice}
+                    onChange={(e) => patchDraft({ unitPrice: e.target.value })}
+                  />
+                </FormGroup>
+                <FormGroup className="mb-2">
+                  <Label className="form-label">Cantidad</Label>
+                  <div className="qty-control qty-control-compact">
+                    <Button
+                      className="btn-secondary-fan"
+                      onClick={() =>
+                        patchDraft({ quantity: Math.max(1, draft.quantity - 1) })
+                      }
+                    >
+                      −
+                    </Button>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      value={draft.quantity}
+                      onChange={(e) =>
+                        patchDraft({
+                          quantity: Math.max(1, Number(e.target.value) || 1),
+                        })
+                      }
+                      className="text-center"
+                    />
+                    <Button
+                      className="btn-secondary-fan"
+                      onClick={() => patchDraft({ quantity: draft.quantity + 1 })}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </FormGroup>
               </div>
-            </FormGroup>
-          </div>
 
-          <FormGroup className="mb-2">
-            <Label className="form-label">Foto (opcional)</Label>
-            <Input
-              innerRef={fileRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => onImageSelected(e.target.files?.[0])}
-            />
-            {draft.imagePreviewUrl && (
-              <div className="d-flex align-items-center gap-2 mt-1">
-                <img
-                  src={draft.imagePreviewUrl}
-                  alt="Vista previa"
-                  className="image-preview-mini"
+              <FormGroup className="mb-0">
+                <Label className="form-label">Foto (opcional)</Label>
+                <Input
+                  innerRef={fileRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => onImageSelected(e.target.files?.[0])}
                 />
-                <small className="text-muted">
-                  ~{formatBytes(draft.imageSize ?? 0)}
-                </small>
-                <Button
-                  color="link"
-                  className="text-danger p-0"
-                  onClick={() => {
-                    patchDraft({
-                      imageBase64: undefined,
-                      imageMimeType: undefined,
-                      imagePreviewUrl: undefined,
-                      imageSize: undefined,
-                    });
-                    if (fileRef.current) fileRef.current.value = '';
-                  }}
-                >
-                  Quitar
-                </Button>
+                {draft.imagePreviewUrl && (
+                  <div className="d-flex align-items-center gap-2 mt-1">
+                    <img
+                      src={draft.imagePreviewUrl}
+                      alt="Vista previa"
+                      className="image-preview-mini"
+                    />
+                    <small className="text-muted">
+                      ~{formatBytes(draft.imageSize ?? 0)}
+                    </small>
+                    <Button
+                      color="link"
+                      className="text-danger p-0"
+                      onClick={() => {
+                        patchDraft({
+                          imageBase64: undefined,
+                          imageMimeType: undefined,
+                          imagePreviewUrl: undefined,
+                          imageSize: undefined,
+                        });
+                        if (fileRef.current) fileRef.current.value = '';
+                      }}
+                    >
+                      Quitar
+                    </Button>
+                  </div>
+                )}
+              </FormGroup>
+            </div>
+          </section>
+
+          <section className="sale-card sale-card-discount-item">
+            <header className="sale-card-head">
+              <span className="sale-card-title">Descuento de este artículo</span>
+              <span className="sale-card-hint">Sobre el precio unitario</span>
+            </header>
+            <div className="sale-card-body">
+              <div className="form-row-2 mb-0">
+                <FormGroup className="mb-0">
+                  <Label className="form-label">Tipo</Label>
+                  <Input
+                    type="select"
+                    value={draft.discountType}
+                    onChange={(e) =>
+                      patchDraft({
+                        discountType: e.target.value as DiscountType,
+                        discountValue:
+                          e.target.value === 'NONE' ? '0' : draft.discountValue,
+                      })
+                    }
+                  >
+                    <option value="NONE">Sin descuento</option>
+                    <option value="FIXED">Fijo en pesos ($)</option>
+                    <option value="PERCENTAGE">Porcentual (%)</option>
+                  </Input>
+                </FormGroup>
+                <FormGroup className="mb-0">
+                  <Label className="form-label">Valor</Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    max={draft.discountType === 'PERCENTAGE' ? 100 : undefined}
+                    disabled={draft.discountType === 'NONE'}
+                    value={
+                      draft.discountType === 'NONE' ? '' : draft.discountValue
+                    }
+                    placeholder="0"
+                    onChange={(e) =>
+                      patchDraft({ discountValue: e.target.value })
+                    }
+                  />
+                </FormGroup>
               </div>
-            )}
-          </FormGroup>
-
-          <div className="summary-compact mb-2">
-            {totals
-              ? `Subtotal ${formatMoney(totals.subtotal)} · Desc. ${formatMoney(
-                  totals.itemDiscountsTotal.plus(totals.generalDiscountAmount),
-                )} · Total ${formatMoney(totals.total)}`
-              : 'Sin artículos aún'}
-          </div>
-
-          <div className="form-row-2 mb-2">
-            <FormGroup className="mb-0">
-              <Label className="form-label">Desc. general</Label>
-              <Input
-                type="select"
-                value={generalDiscountType}
-                onChange={(e) =>
-                  setGeneralDiscountType(e.target.value as DiscountType)
-                }
-              >
-                <option value="NONE">Sin descuento</option>
-                <option value="FIXED">Fijo $</option>
-                <option value="PERCENTAGE">Porcentual %</option>
-              </Input>
-            </FormGroup>
-            <FormGroup className="mb-0">
-              <Label className="form-label">Valor</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                disabled={generalDiscountType === 'NONE'}
-                value={
-                  generalDiscountType === 'NONE' ? '' : generalDiscountValue
-                }
-                onChange={(e) => setGeneralDiscountValue(e.target.value)}
-              />
-            </FormGroup>
-          </div>
+            </div>
+          </section>
 
           <Button
-            className="btn-touch btn-secondary-fan w-100 mb-3"
+            className="btn-touch btn-add-item w-100"
             onClick={addOrUpdateArticle}
           >
-            {editingKey ? 'Actualizar artículo' : 'Agregar artículo'}
+            {editingKey ? '✓ Actualizar artículo' : '+ Agregar artículo'}
           </Button>
 
-          <div className="cart-list mb-2">
-            {items.length === 0 && (
-              <div className="cart-empty">Todavía no agregaste artículos.</div>
-            )}
-            {items.map((item) => {
-              const amount = lineAmount(item);
-              return (
-                <div key={item.key} className="cart-row">
-                  <button
-                    type="button"
-                    className="cart-row-main"
-                    onClick={() => editFromList(item)}
-                  >
-                    <span className="cart-name">
-                      {lineLabel(item, products)}
-                    </span>
-                    <span className="cart-meta">
-                      {item.quantity} u. · {amount ? formatMoney(amount) : '—'}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn danger"
-                    aria-label="Quitar artículo"
-                    onClick={() => removeFromList(item.key)}
-                  >
-                    <IconTrash size={16} />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <section className="sale-card">
+            <header className="sale-card-head">
+              <span className="sale-card-title">Artículos de esta venta</span>
+              <span className="sale-card-hint">
+                {items.length === 0
+                  ? 'Vacío'
+                  : `${items.length} ${items.length === 1 ? 'ítem' : 'ítems'}`}
+              </span>
+            </header>
+            <div className="sale-card-body p-0">
+              <div className="cart-list cart-list-flat">
+                {items.length === 0 && (
+                  <div className="cart-empty">
+                    Todavía no agregaste artículos a la venta.
+                  </div>
+                )}
+                {items.map((item) => {
+                  const amount = lineAmount(item);
+                  return (
+                    <div
+                      key={item.key}
+                      className={`cart-row${editingKey === item.key ? ' is-editing' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className="cart-row-main"
+                        onClick={() => editFromList(item)}
+                      >
+                        <span className="cart-name">
+                          {lineLabel(item, products)}
+                        </span>
+                        <span className="cart-meta">
+                          {item.quantity} u. ·{' '}
+                          {amount ? formatMoney(amount) : '—'}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-btn danger"
+                        aria-label="Quitar artículo"
+                        onClick={() => removeFromList(item.key)}
+                      >
+                        <IconTrash size={16} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
 
-          <FormGroup className="mb-0">
-            <Label className="form-label">Notas</Label>
-            <Input
-              type="textarea"
-              rows={1}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              maxLength={500}
-            />
-          </FormGroup>
+          <section className="sale-card sale-card-discount-sale">
+            <header className="sale-card-head">
+              <span className="sale-card-title">Descuento de la venta</span>
+              <span className="sale-card-hint">Se aplica al total</span>
+            </header>
+            <div className="sale-card-body">
+              <div className="form-row-2 mb-2">
+                <FormGroup className="mb-0">
+                  <Label className="form-label">Tipo</Label>
+                  <Input
+                    type="select"
+                    value={generalDiscountType}
+                    onChange={(e) =>
+                      setGeneralDiscountType(e.target.value as DiscountType)
+                    }
+                  >
+                    <option value="NONE">Sin descuento</option>
+                    <option value="FIXED">Fijo en pesos ($)</option>
+                    <option value="PERCENTAGE">Porcentual (%)</option>
+                  </Input>
+                </FormGroup>
+                <FormGroup className="mb-0">
+                  <Label className="form-label">Valor</Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    disabled={generalDiscountType === 'NONE'}
+                    value={
+                      generalDiscountType === 'NONE' ? '' : generalDiscountValue
+                    }
+                    onChange={(e) => setGeneralDiscountValue(e.target.value)}
+                  />
+                </FormGroup>
+              </div>
+              <div className="summary-compact mb-0">
+                {totals
+                  ? `Subtotal ${formatMoney(totals.subtotal)} · Desc. ${formatMoney(
+                      totals.itemDiscountsTotal.plus(
+                        totals.generalDiscountAmount,
+                      ),
+                    )} · Total ${formatMoney(totals.total)}`
+                  : 'Total: —'}
+              </div>
+            </div>
+          </section>
+
+          <section className="sale-card">
+            <header className="sale-card-head">
+              <span className="sale-card-title">Notas</span>
+              <span className="sale-card-hint">Opcional</span>
+            </header>
+            <div className="sale-card-body">
+              <Input
+                type="textarea"
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                maxLength={500}
+                placeholder="Algo para recordar de esta venta…"
+              />
+            </div>
+          </section>
         </div>
       </ModalBody>
       <ModalFooter className="d-flex gap-2">
