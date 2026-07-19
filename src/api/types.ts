@@ -48,6 +48,7 @@ export interface SaleListItem {
   totalUnits: number;
   productSummary: string[];
   itemDiscountsTotal: string;
+  user?: { id: string; username: string; displayName: string };
   items: SaleItemList[];
 }
 
@@ -76,7 +77,38 @@ export interface SaleDetail {
   generalDiscountAmount: string;
   total: string;
   notes: string | null;
+  user?: { id: string; username: string; displayName: string };
   items: SaleItemDetail[];
+}
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  displayName: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  user: AuthUser;
+}
+
+export interface SellersStats {
+  sellers: Array<{
+    userId: string;
+    name: string;
+    products: number;
+    amount: string;
+  }>;
+  total: {
+    products: number;
+    amount: string;
+  };
+}
+
+export interface RestockItem {
+  productName: string;
+  motifName: string;
+  units: number;
 }
 
 export interface CreateSalePayload {

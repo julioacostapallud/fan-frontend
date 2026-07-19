@@ -8,8 +8,10 @@ import { NewSaleModal } from './NewSaleModal';
 import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import type { SaleDetail, SaleListItem } from '../../api/types';
+import { useAuth } from '../auth/AuthContext';
 
 export function HomePage() {
+  const { user, logout } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<SaleDetail | null>(null);
   const [deletingSale, setDeletingSale] = useState<SaleListItem | null>(null);
@@ -69,8 +71,12 @@ export function HomePage() {
   return (
     <div className="app-shell">
       <nav className="top-nav">
-        <Link to="/estadisticas">Stats</Link>
+        <Link to="/estadisticas">Ventas</Link>
+        <Link to="/reposicion">Reposición</Link>
         <Link to="/admin">Productos</Link>
+        <button type="button" className="nav-user" onClick={logout}>
+          {user?.displayName} · salir
+        </button>
       </nav>
 
       <header className="brand-lockup">
@@ -96,7 +102,7 @@ export function HomePage() {
           to="/estadisticas"
           className="btn-touch btn-secondary-fan"
         >
-          Stats
+          Stats ventas
         </Button>
       </div>
 

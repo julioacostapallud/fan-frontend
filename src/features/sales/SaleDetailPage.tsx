@@ -90,7 +90,10 @@ export function SaleDetailPage() {
         <h1>Venta</h1>
       </div>
 
-      <p className="text-muted mb-2">{formatSaleDateTime(sale.createdAt)}</p>
+      <p className="text-muted mb-2">
+        {formatSaleDateTime(sale.createdAt)}
+        {sale.user ? ` · ${sale.user.displayName}` : ''}
+      </p>
 
       {sale.items.map((item) => {
         const itemDiscount = discountLabel(

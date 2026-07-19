@@ -3,6 +3,17 @@ import { API_TIMEOUT_MS } from '../features/shared/constants';
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '')
   || 'http://localhost:3000/api';
 
+const TOKEN_KEY = 'fan_token';
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setStoredToken(token: string | null) {
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -32,6 +43,7 @@ type RequestOptions = {
   idempotencyKey?: string;
   signal?: AbortSignal;
   timeoutMs?: number;
+  auth?: boolean;
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -54,6 +66,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   if (options.idempotencyKey) {
     headers['Idempotency-Key'] = options.idempotencyKey;
   }
+  if (options.auth !== false) {
+    const token = getStoredToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
 
   try {
     const res = await fetch(`${API_URL}${path}`, {
@@ -71,6 +87,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         else if (typeof data.message === 'string') message = data.message;
       } catch {
         // ignore
+      }
+      if (res.status === 401) {
+        setStoredToken(null);
+        window.dispatchEvent(new Event('fan:unauthorized'));
       }
       throw new ApiError(message, res.status);
     }
@@ -94,8 +114,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 export const http = {
   get: <T>(path: string, signal?: AbortSignal) =>
     request<T>(path, { method: 'GET', signal }),
-  post: <T>(path: string, body: unknown, idempotencyKey?: string) =>
-    request<T>(path, { method: 'POST', body, idempotencyKey }),
+  post: <T>(path: string, body: unknown, idempotencyKey?: string, auth = true) =>
+    request<T>(path, { method: 'POST', body, idempotencyKey, auth }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),

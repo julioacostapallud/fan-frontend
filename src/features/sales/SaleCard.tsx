@@ -36,6 +36,7 @@ export function SaleCard({ sale, onEdit, onDelete }: Props) {
         <div className="sale-row-meta">
           {formatSaleDate(sale.createdAt)} · {sale.totalUnits} u. · {sale.lineCount}{' '}
           {sale.lineCount === 1 ? 'ítem' : 'ítems'}
+          {sale.user ? ` · ${sale.user.displayName}` : ''}
         </div>
         <div className="sale-row-products" title={summary}>
           {summary}

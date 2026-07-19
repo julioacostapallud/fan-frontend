@@ -1,16 +1,26 @@
 import { http } from './httpClient';
 import type {
+  AuthUser,
   CreateSalePayload,
+  LoginResponse,
   Motif,
   Product,
   ProductStats,
+  RestockItem,
   SaleDetail,
   SalesPage,
+  SellersStats,
   StatsSummary,
 } from './types';
 
 export const api = {
   health: () => http.get<{ status: string }>('/health'),
+
+  auth: {
+    login: (username: string, password: string) =>
+      http.post<LoginResponse>('/auth/login', { username, password }, undefined, false),
+    me: () => http.get<AuthUser>('/auth/me'),
+  },
 
   products: {
     list: (params?: { activeOnly?: boolean; q?: string }) => {
@@ -50,10 +60,19 @@ export const api = {
       http.post<SaleDetail>('/sales', body, idempotencyKey),
     update: (id: string, body: CreateSalePayload) =>
       http.patch<SaleDetail>(`/sales/${id}`, body),
-    remove: (id: string) => http.delete<{ id: string; deleted: boolean }>(`/sales/${id}`),
+    remove: (id: string) =>
+      http.delete<{ id: string; deleted: boolean }>(`/sales/${id}`),
   },
 
   statistics: {
+    sellers: (from?: string, to?: string) => {
+      const qs = new URLSearchParams();
+      if (from) qs.set('from', from);
+      if (to) qs.set('to', to);
+      const q = qs.toString();
+      return http.get<SellersStats>(`/statistics/sellers${q ? `?${q}` : ''}`);
+    },
+    restock: () => http.get<RestockItem[]>('/statistics/restock'),
     summary: (from?: string, to?: string) => {
       const qs = new URLSearchParams();
       if (from) qs.set('from', from);

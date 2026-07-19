@@ -5,10 +5,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/app.css';
 import { HomePage } from './features/sales/HomePage';
+import { AuthProvider } from './features/auth/AuthContext';
+import { RequireAuth } from './features/auth/RequireAuth';
+import { LoginPage } from './features/auth/LoginPage';
 
 const StatisticsPage = lazy(() =>
   import('./features/statistics/StatisticsPage').then((m) => ({
     default: m.StatisticsPage,
+  })),
+);
+const RestockPage = lazy(() =>
+  import('./features/statistics/RestockPage').then((m) => ({
+    default: m.RestockPage,
   })),
 );
 const AdminPage = lazy(() =>
@@ -44,16 +52,55 @@ function RouteFallback() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/ventas/:id" element={<SaleDetailPage />} />
-            <Route path="/estadisticas" element={<StatisticsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/"
+                element={
+                  <RequireAuth>
+                    <HomePage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/ventas/:id"
+                element={
+                  <RequireAuth>
+                    <SaleDetailPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/estadisticas"
+                element={
+                  <RequireAuth>
+                    <StatisticsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/reposicion"
+                element={
+                  <RequireAuth>
+                    <RestockPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <RequireAuth>
+                    <AdminPage />
+                  </RequireAuth>
+                }
+              />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

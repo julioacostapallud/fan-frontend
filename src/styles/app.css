@@ -59,15 +59,75 @@ a {
   margin-bottom: 0.5rem;
 }
 
-.top-nav a {
+.top-nav a,
+.top-nav .nav-user {
   color: var(--fan-muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 0.4rem 0.55rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
+  border: none;
+}
+
+.top-nav .nav-user {
+  cursor: pointer;
+  color: var(--fan-accent-2);
+}
+
+.login-card {
+  background: var(--fan-surface);
+  border: 1px solid var(--fan-line);
+  border-radius: 16px;
+  padding: 1.1rem;
+  box-shadow: var(--fan-shadow);
+}
+
+.stats-tabs .nav-link {
+  color: var(--fan-muted) !important;
+  border-radius: 999px !important;
+  padding: 0.45rem 0.9rem !important;
+}
+
+.stats-tabs .nav-link.active {
+  background: var(--fan-accent) !important;
+  color: #fff !important;
+}
+
+.table-wrap {
+  background: var(--fan-surface);
+  border: 1px solid var(--fan-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.stats-table {
+  color: var(--fan-ink);
+  margin: 0;
+}
+
+.stats-table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fan-muted);
+  border-bottom: 1px solid var(--fan-line) !important;
+  padding: 0.65rem 0.75rem !important;
+}
+
+.stats-table td {
+  padding: 0.6rem 0.75rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  vertical-align: middle;
+}
+
+.stats-table .total-row td {
+  font-weight: 700;
+  border-top: 1px solid var(--fan-line) !important;
+  border-bottom: none !important;
+  color: var(--fan-accent-2);
 }
 
 .brand-lockup {
