@@ -85,10 +85,24 @@ a {
   box-shadow: var(--fan-shadow);
 }
 
+.stats-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.15rem;
+}
+
+.stats-tabs .nav-item {
+  flex: 0 0 auto;
+}
+
 .stats-tabs .nav-link {
   color: var(--fan-muted) !important;
   border-radius: 999px !important;
   padding: 0.45rem 0.9rem !important;
+  white-space: nowrap;
 }
 
 .stats-tabs .nav-link.active {

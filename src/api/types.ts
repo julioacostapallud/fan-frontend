@@ -105,6 +105,12 @@ export interface SellersStats {
   };
 }
 
+/** Días cerrados (yyyy-MM-dd) + hoy en TZ del negocio. */
+export interface StatsDays {
+  days: string[];
+  today: string;
+}
+
 export interface RestockItem {
   productName: string;
   motifName: string;

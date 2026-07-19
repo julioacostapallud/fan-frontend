@@ -10,6 +10,7 @@ import type {
   SaleDetail,
   SalesPage,
   SellersStats,
+  StatsDays,
   StatsSummary,
 } from './types';
 
@@ -77,6 +78,7 @@ export const api = {
       const q = qs.toString();
       return http.get<SellersStats>(`/statistics/sellers${q ? `?${q}` : ''}`);
     },
+    days: () => http.get<StatsDays>('/statistics/days'),
     restock: () => http.get<RestockItem[]>('/statistics/restock'),
     summary: (from?: string, to?: string) => {
       const qs = new URLSearchParams();

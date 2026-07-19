@@ -1,21 +1,41 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Nav, NavItem, NavLink, Spinner, Table } from 'reactstrap';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/api';
 import { formatMoney } from '../shared/money';
-import { todayIsoDate } from '../shared/dates';
+import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 
-type Tab = 'general' | 'hoy';
+type Tab = 'general' | 'hoy' | string; // string = yyyy-MM-dd de un día cerrado
+
+function rangeForTab(tab: Tab): { from?: string; to?: string } {
+  if (tab === 'general') return { from: undefined, to: undefined };
+  if (tab === 'hoy') {
+    const today = todayIsoDate();
+    return { from: today, to: today };
+  }
+  return { from: tab, to: tab };
+}
 
 export function StatisticsPage() {
   const [tab, setTab] = useState<Tab>('hoy');
 
-  const range =
-    tab === 'hoy'
-      ? { from: todayIsoDate(), to: todayIsoDate() }
-      : { from: undefined, to: undefined };
+  const daysQuery = useQuery({
+    queryKey: ['stats-days'],
+    queryFn: () => api.statistics.days(),
+  });
+
+  const closedDays = daysQuery.data?.days ?? [];
+
+  useEffect(() => {
+    if (tab === 'general' || tab === 'hoy') return;
+    if (closedDays.length > 0 && !closedDays.includes(tab)) {
+      setTab('hoy');
+    }
+  }, [closedDays, tab]);
+
+  const range = useMemo(() => rangeForTab(tab), [tab]);
 
   const query = useQuery({
     queryKey: ['stats-sellers', tab, range.from, range.to],
@@ -52,6 +72,20 @@ export function StatisticsPage() {
             General
           </NavLink>
         </NavItem>
+        {closedDays.map((day) => (
+          <NavItem key={day}>
+            <NavLink
+              href="#"
+              active={tab === day}
+              onClick={(e) => {
+                e.preventDefault();
+                setTab(day);
+              }}
+            >
+              Día {formatIsoDayLabel(day)}
+            </NavLink>
+          </NavItem>
+        ))}
         <NavItem>
           <NavLink
             href="#"
