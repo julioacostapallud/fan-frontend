@@ -13,7 +13,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/api';
 import { createIdempotencyKey, ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
-import type { DiscountType, Product } from '../../api/types';
+import type { DiscountType, Product, SaleDetail } from '../../api/types';
 import { calculateSale, formatMoney } from '../shared/money';
 import { formatBytes, processImageFile } from '../shared/image';
 import { createSaleSchema } from './sale.schema';
@@ -35,7 +35,8 @@ interface LineDraft {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
+  editingSale?: SaleDetail | null;
 }
 
 function emptyLine(): LineDraft {
@@ -50,6 +51,24 @@ function emptyLine(): LineDraft {
   };
 }
 
+function linesFromSale(sale: SaleDetail): LineDraft[] {
+  return sale.items.map((item) => ({
+    key: item.id,
+    productId: item.productId,
+    motifName: item.motif.name,
+    quantity: item.quantity,
+    unitPrice: String(Number(item.unitPrice)),
+    discountType: item.discountType,
+    discountValue: String(Number(item.discountValue)),
+    imageBase64: item.imageBase64 ?? undefined,
+    imageMimeType: item.imageMimeType ?? undefined,
+    imagePreviewUrl:
+      item.imageBase64 && item.imageMimeType
+        ? `data:${item.imageMimeType};base64,${item.imageBase64}`
+        : undefined,
+  }));
+}
+
 function useDebounced<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -59,7 +78,8 @@ function useDebounced<T>(value: T, delay: number): T {
   return debounced;
 }
 
-export function NewSaleModal({ isOpen, onClose, onCreated }: Props) {
+export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
+  const isEdit = Boolean(editingSale);
   const [items, setItems] = useState<LineDraft[]>([emptyLine()]);
   const [generalDiscountType, setGeneralDiscountType] =
     useState<DiscountType>('NONE');
@@ -70,8 +90,8 @@ export function NewSaleModal({ isOpen, onClose, onCreated }: Props) {
   const idempotencyRef = useRef<string>(createIdempotencyKey());
 
   const productsQuery = useQuery({
-    queryKey: ['products', 'active'],
-    queryFn: () => api.products.list({ activeOnly: true }),
+    queryKey: ['products', isEdit ? 'all' : 'active'],
+    queryFn: () => api.products.list({ activeOnly: !isEdit }),
     staleTime: 60_000,
     enabled: isOpen,
   });
@@ -79,16 +99,22 @@ export function NewSaleModal({ isOpen, onClose, onCreated }: Props) {
   const products = productsQuery.data ?? [];
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    setError(null);
+    setSaving(false);
+    if (editingSale) {
+      setItems(linesFromSale(editingSale));
+      setGeneralDiscountType(editingSale.generalDiscountType);
+      setGeneralDiscountValue(String(Number(editingSale.generalDiscountValue)));
+      setNotes(editingSale.notes ?? '');
+    } else {
       idempotencyRef.current = createIdempotencyKey();
       setItems([emptyLine()]);
       setGeneralDiscountType('NONE');
       setGeneralDiscountValue('0');
       setNotes('');
-      setError(null);
-      setSaving(false);
     }
-  }, [isOpen]);
+  }, [isOpen, editingSale]);
 
   const totals = useMemo(() => {
     try {
@@ -179,25 +205,28 @@ export function NewSaleModal({ isOpen, onClose, onCreated }: Props) {
 
     setSaving(true);
     try {
-      await api.sales.create(
-        {
-          items: items.map((i) => ({
-            productId: i.productId,
-            motifName: i.motifName.trim(),
-            quantity: i.quantity,
-            unitPrice: Number(i.unitPrice),
-            discountType: i.discountType,
-            discountValue: Number(i.discountValue || 0),
-            imageBase64: i.imageBase64,
-            imageMimeType: i.imageMimeType,
-          })),
-          generalDiscountType: parsed.data.generalDiscountType,
-          generalDiscountValue: parsed.data.generalDiscountValue,
-          notes: parsed.data.notes,
-        },
-        idempotencyRef.current,
-      );
-      onCreated();
+      const payload = {
+        items: items.map((i) => ({
+          productId: i.productId,
+          motifName: i.motifName.trim(),
+          quantity: i.quantity,
+          unitPrice: Number(i.unitPrice),
+          discountType: i.discountType,
+          discountValue: Number(i.discountValue || 0),
+          imageBase64: i.imageBase64,
+          imageMimeType: i.imageMimeType,
+        })),
+        generalDiscountType: parsed.data.generalDiscountType,
+        generalDiscountValue: parsed.data.generalDiscountValue,
+        notes: parsed.data.notes,
+      };
+
+      if (isEdit && editingSale) {
+        await api.sales.update(editingSale.id, payload);
+      } else {
+        await api.sales.create(payload, idempotencyRef.current);
+      }
+      onSaved();
     } catch (err) {
       if (
         err instanceof NetworkError ||
@@ -206,7 +235,7 @@ export function NewSaleModal({ isOpen, onClose, onCreated }: Props) {
       ) {
         setError(err.message);
       } else {
-        setError('No se pudo guardar la venta');
+        setError(isEdit ? 'No se pudo actualizar la venta' : 'No se pudo guardar la venta');
       }
     } finally {
       setSaving(false);
@@ -221,7 +250,7 @@ export function NewSaleModal({ isOpen, onClose, onCreated }: Props) {
       className="fullscreen-modal"
       scrollable
     >
-      <ModalHeader toggle={onClose}>Nueva venta</ModalHeader>
+      <ModalHeader toggle={onClose}>{isEdit ? 'Editar venta' : 'Nueva venta'}</ModalHeader>
       <ModalBody>
         {error && <div className="error-banner">{error}</div>}
 
@@ -331,7 +360,7 @@ export function NewSaleModal({ isOpen, onClose, onCreated }: Props) {
               <Spinner size="sm" className="me-2" /> Guardando…
             </>
           ) : (
-            'Guardar venta'
+            'Guardar'
           )}
         </Button>
       </ModalFooter>

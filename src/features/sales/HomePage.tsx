@@ -5,10 +5,16 @@ import { useState } from 'react';
 import { api } from '../../api/api';
 import { SaleCard } from './SaleCard';
 import { NewSaleModal } from './NewSaleModal';
+import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
+import type { SaleDetail, SaleListItem } from '../../api/types';
 
 export function HomePage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingSale, setEditingSale] = useState<SaleDetail | null>(null);
+  const [deletingSale, setDeletingSale] = useState<SaleListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const salesQuery = useInfiniteQuery({
@@ -28,10 +34,42 @@ export function HomePage() {
       : 'No se pudieron cargar las ventas'
     : null;
 
+  async function openEdit(sale: SaleListItem) {
+    setActionError(null);
+    try {
+      const detail = await api.sales.get(sale.id);
+      setEditingSale(detail);
+      setModalOpen(true);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : 'No se pudo abrir la venta',
+      );
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deletingSale) return;
+    setDeleting(true);
+    setActionError(null);
+    try {
+      await api.sales.remove(deletingSale.id);
+      setDeletingSale(null);
+      await queryClient.invalidateQueries({ queryKey: ['sales'] });
+      await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
+      await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : 'No se pudo eliminar la venta',
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="app-shell">
       <nav className="top-nav">
-        <Link to="/estadisticas">Estadísticas</Link>
+        <Link to="/estadisticas">Stats</Link>
         <Link to="/admin">Productos</Link>
       </nav>
 
@@ -46,7 +84,10 @@ export function HomePage() {
         <Button
           color="primary"
           className="btn-touch btn-primary-fan"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setEditingSale(null);
+            setModalOpen(true);
+          }}
         >
           Nueva venta
         </Button>
@@ -55,22 +96,24 @@ export function HomePage() {
           to="/estadisticas"
           className="btn-touch btn-secondary-fan"
         >
-          Ver estadísticas
+          Stats
         </Button>
       </div>
 
-      <h2 className="section-title">Últimas ventas</h2>
+      <h2 className="section-title">Ventas</h2>
 
-      {errorMessage && (
+      {(errorMessage || actionError) && (
         <div className="error-banner">
-          {errorMessage}{' '}
-          <button
-            type="button"
-            className="btn btn-link p-0 align-baseline"
-            onClick={() => salesQuery.refetch()}
-          >
-            Reintentar
-          </button>
+          {actionError || errorMessage}{' '}
+          {errorMessage && (
+            <button
+              type="button"
+              className="btn btn-link p-0 align-baseline"
+              onClick={() => salesQuery.refetch()}
+            >
+              Reintentar
+            </button>
+          )}
         </div>
       )}
 
@@ -90,7 +133,12 @@ export function HomePage() {
       )}
 
       {sales.map((sale) => (
-        <SaleCard key={sale.id} sale={sale} />
+        <SaleCard
+          key={sale.id}
+          sale={sale}
+          onEdit={openEdit}
+          onDelete={setDeletingSale}
+        />
       ))}
 
       {salesQuery.hasNextPage && (
@@ -112,11 +160,25 @@ export function HomePage() {
 
       <NewSaleModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={async () => {
+        editingSale={editingSale}
+        onClose={() => {
           setModalOpen(false);
-          await queryClient.invalidateQueries({ queryKey: ['sales'] });
+          setEditingSale(null);
         }}
+        onSaved={async () => {
+          setModalOpen(false);
+          setEditingSale(null);
+          await queryClient.invalidateQueries({ queryKey: ['sales'] });
+          await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
+          await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
+        }}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingSale)}
+        busy={deleting}
+        onCancel={() => setDeletingSale(null)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

@@ -98,6 +98,7 @@ export const http = {
     request<T>(path, { method: 'POST', body, idempotencyKey }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body }),
+  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };
 
 export function createIdempotencyKey(): string {

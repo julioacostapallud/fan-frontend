@@ -48,6 +48,9 @@ export const api = {
     get: (id: string) => http.get<SaleDetail>(`/sales/${id}`),
     create: (body: CreateSalePayload, idempotencyKey: string) =>
       http.post<SaleDetail>('/sales', body, idempotencyKey),
+    update: (id: string, body: CreateSalePayload) =>
+      http.patch<SaleDetail>(`/sales/${id}`, body),
+    remove: (id: string) => http.delete<{ id: string; deleted: boolean }>(`/sales/${id}`),
   },
 
   statistics: {

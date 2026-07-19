@@ -1,10 +1,13 @@
-import { Link, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Spinner } from 'reactstrap';
+import { useState } from 'react';
 import { api } from '../../api/api';
 import { formatMoney } from '../shared/money';
 import { formatSaleDateTime } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
+import { NewSaleModal } from './NewSaleModal';
+import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 
 function discountLabel(
   type: string,
@@ -20,6 +23,12 @@ function discountLabel(
 
 export function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const query = useQuery({
     queryKey: ['sale', id],
     queryFn: () => api.sales.get(id!),
@@ -58,16 +67,30 @@ export function SaleDetailPage() {
     sale.generalDiscountAmount,
   );
 
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      await api.sales.remove(sale.id);
+      await queryClient.invalidateQueries({ queryKey: ['sales'] });
+      await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
+      await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
+      navigate('/');
+    } catch (err) {
+      setDeleting(false);
+      alert(err instanceof Error ? err.message : 'No se pudo eliminar');
+    }
+  }
+
   return (
     <div className="app-shell">
       <div className="page-header">
         <Button tag={Link} to="/" color="link" className="p-0">
           ←
         </Button>
-        <h1>Detalle de venta</h1>
+        <h1>Venta</h1>
       </div>
 
-      <p className="text-muted mb-3">{formatSaleDateTime(sale.createdAt)}</p>
+      <p className="text-muted mb-2">{formatSaleDateTime(sale.createdAt)}</p>
 
       {sale.items.map((item) => {
         const itemDiscount = discountLabel(
@@ -77,7 +100,7 @@ export function SaleDetailPage() {
         );
         return (
           <div key={item.id} className="item-card">
-            <div className="d-flex justify-content-between">
+            <div className="d-flex justify-content-between gap-2">
               <strong>
                 {item.product.name} · {item.motif.name}
               </strong>
@@ -87,11 +110,11 @@ export function SaleDetailPage() {
               {item.quantity} × {formatMoney(item.unitPrice)}
             </div>
             {itemDiscount && (
-              <div className="sale-row-meta">Descuento: {itemDiscount}</div>
+              <div className="sale-row-meta">Desc.: {itemDiscount}</div>
             )}
             {item.imageBase64 && item.imageMimeType && (
               <img
-                className="image-preview mt-3"
+                className="image-preview mt-2"
                 alt={`${item.product.name} ${item.motif.name}`}
                 src={`data:${item.imageMimeType};base64,${item.imageBase64}`}
                 loading="lazy"
@@ -108,7 +131,7 @@ export function SaleDetailPage() {
         </div>
         {generalDiscount && (
           <div className="row-line">
-            <span>Descuento general</span>
+            <span>Desc. general</span>
             <span>{generalDiscount}</span>
           </div>
         )}
@@ -121,9 +144,36 @@ export function SaleDetailPage() {
       {sale.notes && (
         <div className="mt-3">
           <strong>Notas</strong>
-          <p className="mb-0">{sale.notes}</p>
+          <p className="mb-0 text-muted">{sale.notes}</p>
         </div>
       )}
+
+      <div className="detail-actions">
+        <Button className="btn-touch btn-secondary-fan" onClick={() => setEditOpen(true)}>
+          Editar
+        </Button>
+        <Button color="danger" className="btn-touch" onClick={() => setDeleteOpen(true)}>
+          Eliminar
+        </Button>
+      </div>
+
+      <NewSaleModal
+        isOpen={editOpen}
+        editingSale={sale}
+        onClose={() => setEditOpen(false)}
+        onSaved={async () => {
+          setEditOpen(false);
+          await query.refetch();
+          await queryClient.invalidateQueries({ queryKey: ['sales'] });
+        }}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={deleteOpen}
+        busy={deleting}
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

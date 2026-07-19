@@ -1,43 +1,65 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { SaleListItem } from '../../api/types';
 import { formatMoney } from '../shared/money';
 import { formatSaleDate, formatSaleTime } from '../shared/dates';
+import { IconEdit, IconTrash } from '../shared/Icons';
 
 interface Props {
   sale: SaleListItem;
+  onEdit: (sale: SaleListItem) => void;
+  onDelete: (sale: SaleListItem) => void;
 }
 
-export function SaleCard({ sale }: Props) {
-  const hasDiscounts =
-    Number(sale.generalDiscountAmount) > 0 || Number(sale.itemDiscountsTotal) > 0;
+export function SaleCard({ sale, onEdit, onDelete }: Props) {
+  const navigate = useNavigate();
+  const summary = sale.productSummary.join(' · ');
 
   return (
-    <Link to={`/ventas/${sale.id}`} className="sale-row">
-      <div className="sale-row-top">
-        <div>
+    <div className="sale-row">
+      <button
+        type="button"
+        className="sale-row-main"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: 'inherit',
+          padding: 0,
+          textAlign: 'left',
+          cursor: 'pointer',
+        }}
+        onClick={() => navigate(`/ventas/${sale.id}`)}
+      >
+        <div className="sale-row-top">
           <div className="sale-row-time">{formatSaleTime(sale.createdAt)}</div>
-          <div className="sale-row-meta">{formatSaleDate(sale.createdAt)}</div>
+          <div className="sale-row-total">{formatMoney(sale.total)}</div>
         </div>
-        <div className="sale-row-total">{formatMoney(sale.total)}</div>
-      </div>
-      <div className="sale-row-meta">
-        {sale.lineCount} {sale.lineCount === 1 ? 'artículo' : 'artículos'} ·{' '}
-        {sale.totalUnits} {sale.totalUnits === 1 ? 'unidad' : 'unidades'}
-      </div>
-      <ul className="sale-row-products">
-        {sale.productSummary.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-      {hasDiscounts && (
         <div className="sale-row-meta">
-          Descuentos aplicados
-          {Number(sale.itemDiscountsTotal) > 0 &&
-            ` · ítems ${formatMoney(sale.itemDiscountsTotal)}`}
-          {Number(sale.generalDiscountAmount) > 0 &&
-            ` · general ${formatMoney(sale.generalDiscountAmount)}`}
+          {formatSaleDate(sale.createdAt)} · {sale.totalUnits} u. · {sale.lineCount}{' '}
+          {sale.lineCount === 1 ? 'ítem' : 'ítems'}
         </div>
-      )}
-    </Link>
+        <div className="sale-row-products" title={summary}>
+          {summary}
+        </div>
+      </button>
+
+      <div className="sale-row-actions">
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Editar venta"
+          onClick={() => onEdit(sale)}
+        >
+          <IconEdit />
+        </button>
+        <button
+          type="button"
+          className="icon-btn danger"
+          aria-label="Eliminar venta"
+          onClick={() => onDelete(sale)}
+        >
+          <IconTrash />
+        </button>
+      </div>
+    </div>
   );
 }
