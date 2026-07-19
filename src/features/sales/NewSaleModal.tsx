@@ -232,13 +232,39 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
 
   async function handleSave() {
     setError(null);
-    if (!items.length) {
-      setError('Agregá al menos un artículo');
+
+    // Si hay un artículo cargado en el formulario y no se pulsó "Agregar",
+    // lo incorporamos automáticamente antes de guardar.
+    let workingItems = items;
+    const draftHasData =
+      Boolean(draft.productId) ||
+      Boolean(draft.motifName.trim()) ||
+      Boolean(draft.unitPrice);
+
+    if (draftHasData) {
+      const draftError = validateDraft();
+      if (draftError) {
+        setError(draftError);
+        return;
+      }
+      const next = { ...draft, motifName: draft.motifName.trim() };
+      if (editingKey) {
+        workingItems = items.map((i) => (i.key === editingKey ? next : i));
+      } else {
+        workingItems = [...items, next];
+      }
+      setItems(workingItems);
+      setDraft(emptyLine());
+      setEditingKey(null);
+    }
+
+    if (!workingItems.length) {
+      setError('Completá el artículo y tocá Guardar (o Agregar artículo).');
       return;
     }
 
     const parsed = createSaleSchema.safeParse({
-      items: items.map((i) => ({
+      items: workingItems.map((i) => ({
         productId: i.productId,
         motifName: i.motifName,
         quantity: i.quantity,
@@ -275,7 +301,7 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
     setSaving(true);
     try {
       const payload = {
-        items: items.map((i) => ({
+        items: workingItems.map((i) => ({
           productId: i.productId,
           motifName: i.motifName.trim(),
           quantity: i.quantity,
@@ -568,7 +594,7 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
         <Button
           className="btn-touch btn-primary-fan flex-fill"
           onClick={handleSave}
-          disabled={saving || items.length === 0}
+          disabled={saving}
         >
           {saving ? (
             <>
