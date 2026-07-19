@@ -14,9 +14,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/api';
 import { createIdempotencyKey, ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import type { DiscountType, Product, SaleDetail } from '../../api/types';
-import { calculateSale, formatMoney } from '../shared/money';
+import { calculateLineItem, calculateSale, formatMoney } from '../shared/money';
 import { formatBytes, processImageFile } from '../shared/image';
 import { createSaleSchema } from './sale.schema';
+import { MotifCombobox } from './MotifCombobox';
+import { IconTrash } from '../shared/Icons';
 
 interface LineDraft {
   key: string;
@@ -69,18 +71,30 @@ function linesFromSale(sale: SaleDetail): LineDraft[] {
   }));
 }
 
-function useDebounced<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
+function lineLabel(item: LineDraft, products: Product[]): string {
+  const product = products.find((p) => p.id === item.productId);
+  const name = product?.name ?? 'Producto';
+  return `${name} · ${item.motifName}`.trim();
+}
+
+function lineAmount(item: LineDraft): string | null {
+  try {
+    return calculateLineItem({
+      quantity: item.quantity,
+      unitPrice: item.unitPrice || 0,
+      discountType: item.discountType,
+      discountValue: item.discountValue || 0,
+    }).lineTotal.toString();
+  } catch {
+    return null;
+  }
 }
 
 export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
   const isEdit = Boolean(editingSale);
-  const [items, setItems] = useState<LineDraft[]>([emptyLine()]);
+  const [items, setItems] = useState<LineDraft[]>([]);
+  const [draft, setDraft] = useState<LineDraft>(emptyLine());
+  const [editingKey, setEditingKey] = useState<string | null>(null);
   const [generalDiscountType, setGeneralDiscountType] =
     useState<DiscountType>('NONE');
   const [generalDiscountValue, setGeneralDiscountValue] = useState('0');
@@ -88,6 +102,7 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const idempotencyRef = useRef<string>(createIdempotencyKey());
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const productsQuery = useQuery({
     queryKey: ['products', isEdit ? 'all' : 'active'],
@@ -102,6 +117,8 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
     if (!isOpen) return;
     setError(null);
     setSaving(false);
+    setEditingKey(null);
+    setDraft(emptyLine());
     if (editingSale) {
       setItems(linesFromSale(editingSale));
       setGeneralDiscountType(editingSale.generalDiscountType);
@@ -109,7 +126,7 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
       setNotes(editingSale.notes ?? '');
     } else {
       idempotencyRef.current = createIdempotencyKey();
-      setItems([emptyLine()]);
+      setItems([]);
       setGeneralDiscountType('NONE');
       setGeneralDiscountValue('0');
       setNotes('');
@@ -118,17 +135,14 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
 
   const totals = useMemo(() => {
     try {
-      const calcItems = items
-        .filter((i) => i.productId && i.motifName.trim() && i.quantity > 0)
-        .map((i) => ({
+      if (!items.length) return null;
+      return calculateSale({
+        items: items.map((i) => ({
           quantity: i.quantity,
           unitPrice: i.unitPrice || 0,
           discountType: i.discountType,
           discountValue: i.discountValue || 0,
-        }));
-      if (!calcItems.length) return null;
-      return calculateSale({
-        items: calcItems,
+        })),
         generalDiscountType,
         generalDiscountValue: generalDiscountValue || 0,
       });
@@ -137,26 +151,77 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
     }
   }, [items, generalDiscountType, generalDiscountValue]);
 
-  function updateItem(key: string, patch: Partial<LineDraft>) {
-    setItems((prev) => prev.map((i) => (i.key === key ? { ...i, ...patch } : i)));
+  function patchDraft(patch: Partial<LineDraft>) {
+    setDraft((prev) => ({ ...prev, ...patch }));
   }
 
-  function selectProduct(key: string, product: Product) {
-    updateItem(key, {
+  function selectProduct(product: Product) {
+    patchDraft({
       productId: product.id,
       unitPrice: String(Number(product.defaultPrice)),
     });
   }
 
-  async function onImageSelected(key: string, file: File | undefined) {
+  function validateDraft(): string | null {
+    if (!draft.productId) return 'Seleccioná un producto';
+    if (!draft.motifName.trim()) return 'Indicá el motivo o diseño';
+    if (draft.quantity <= 0) return 'La cantidad debe ser mayor que cero';
+    if (draft.unitPrice === '' || Number(draft.unitPrice) < 0) {
+      return 'El precio unitario no puede ser negativo';
+    }
+    try {
+      calculateLineItem({
+        quantity: draft.quantity,
+        unitPrice: draft.unitPrice,
+        discountType: draft.discountType,
+        discountValue: draft.discountValue || 0,
+      });
+    } catch (err) {
+      return err instanceof Error ? err.message : 'Revisá el descuento';
+    }
+    return null;
+  }
+
+  function addOrUpdateArticle() {
+    const msg = validateDraft();
+    if (msg) {
+      setError(msg);
+      return;
+    }
+    setError(null);
+    const next = { ...draft, motifName: draft.motifName.trim() };
+    if (editingKey) {
+      setItems((prev) => prev.map((i) => (i.key === editingKey ? next : i)));
+    } else {
+      setItems((prev) => [...prev, next]);
+    }
+    setDraft(emptyLine());
+    setEditingKey(null);
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
+  function editFromList(item: LineDraft) {
+    setDraft({ ...item });
+    setEditingKey(item.key);
+    setError(null);
+  }
+
+  function removeFromList(key: string) {
+    setItems((prev) => prev.filter((i) => i.key !== key));
+    if (editingKey === key) {
+      setDraft(emptyLine());
+      setEditingKey(null);
+    }
+  }
+
+  async function onImageSelected(file: File | undefined) {
     if (!file) return;
     try {
       const processed = await processImageFile(file);
-      const previewUrl = `data:${processed.mimeType};base64,${processed.base64}`;
-      updateItem(key, {
+      patchDraft({
         imageBase64: processed.base64,
         imageMimeType: processed.mimeType,
-        imagePreviewUrl: previewUrl,
+        imagePreviewUrl: `data:${processed.mimeType};base64,${processed.base64}`,
         imageSize: processed.byteSize,
       });
       setError(null);
@@ -167,6 +232,10 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
 
   async function handleSave() {
     setError(null);
+    if (!items.length) {
+      setError('Agregá al menos un artículo');
+      return;
+    }
 
     const parsed = createSaleSchema.safeParse({
       items: items.map((i) => ({
@@ -254,92 +323,238 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
       <ModalBody>
         {error && <div className="error-banner">{error}</div>}
 
-        {items.map((item, index) => (
-          <SaleItemEditor
-            key={item.key}
-            index={index}
-            item={item}
-            products={products}
-            allProducts={products}
-            canRemove={items.length > 1}
-            onChange={(patch) => updateItem(item.key, patch)}
-            onSelectProduct={(p) => selectProduct(item.key, p)}
-            onImage={(file) => onImageSelected(item.key, file)}
-            onRemove={() =>
-              setItems((prev) => prev.filter((i) => i.key !== item.key))
-            }
-          />
-        ))}
+        <div className="sale-compose">
+          <div className="form-row-2">
+            <FormGroup className="mb-2">
+              <Label className="form-label">Producto</Label>
+              <Input
+                type="select"
+                value={draft.productId}
+                onChange={(e) => {
+                  const product = products.find((p) => p.id === e.target.value);
+                  if (product) selectProduct(product);
+                  else patchDraft({ productId: '', unitPrice: '' });
+                }}
+              >
+                <option value="">Seleccionar…</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </Input>
+            </FormGroup>
+            <FormGroup className="mb-2">
+              <Label className="form-label">Motivo / diseño</Label>
+              <MotifCombobox
+                productId={draft.productId}
+                value={draft.motifName}
+                onChange={(motifName) => patchDraft({ motifName })}
+              />
+            </FormGroup>
+          </div>
 
-        <Button
-          className="btn-touch btn-secondary-fan w-100 mb-3"
-          onClick={() => setItems((prev) => [...prev, emptyLine()])}
-        >
-          Agregar otro artículo
-        </Button>
+          <div className="form-row-3">
+            <FormGroup className="mb-2">
+              <Label className="form-label">P. unitario</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                value={draft.unitPrice}
+                onChange={(e) => patchDraft({ unitPrice: e.target.value })}
+              />
+            </FormGroup>
+            <FormGroup className="mb-2">
+              <Label className="form-label">Cantidad</Label>
+              <div className="qty-control qty-control-compact">
+                <Button
+                  className="btn-secondary-fan"
+                  onClick={() =>
+                    patchDraft({ quantity: Math.max(1, draft.quantity - 1) })
+                  }
+                >
+                  −
+                </Button>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={draft.quantity}
+                  onChange={(e) =>
+                    patchDraft({
+                      quantity: Math.max(1, Number(e.target.value) || 1),
+                    })
+                  }
+                  className="text-center"
+                />
+                <Button
+                  className="btn-secondary-fan"
+                  onClick={() => patchDraft({ quantity: draft.quantity + 1 })}
+                >
+                  +
+                </Button>
+              </div>
+            </FormGroup>
+            <FormGroup className="mb-2">
+              <Label className="form-label">Desc. (sobre P.U.)</Label>
+              <div className="discount-inline">
+                <Input
+                  type="select"
+                  value={draft.discountType}
+                  onChange={(e) =>
+                    patchDraft({
+                      discountType: e.target.value as DiscountType,
+                      discountValue:
+                        e.target.value === 'NONE' ? '0' : draft.discountValue,
+                    })
+                  }
+                >
+                  <option value="NONE">No</option>
+                  <option value="FIXED">$</option>
+                  <option value="PERCENTAGE">%</option>
+                </Input>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={draft.discountType === 'PERCENTAGE' ? 100 : undefined}
+                  disabled={draft.discountType === 'NONE'}
+                  value={draft.discountType === 'NONE' ? '' : draft.discountValue}
+                  placeholder="0"
+                  onChange={(e) => patchDraft({ discountValue: e.target.value })}
+                />
+              </div>
+            </FormGroup>
+          </div>
 
-        <FormGroup>
-          <Label className="form-label">Descuento general</Label>
-          <Input
-            type="select"
-            value={generalDiscountType}
-            onChange={(e) =>
-              setGeneralDiscountType(e.target.value as DiscountType)
-            }
-          >
-            <option value="NONE">Sin descuento</option>
-            <option value="FIXED">Fijo en pesos</option>
-            <option value="PERCENTAGE">Porcentual</option>
-          </Input>
-        </FormGroup>
-        {generalDiscountType !== 'NONE' && (
-          <FormGroup>
-            <Label className="form-label">
-              {generalDiscountType === 'PERCENTAGE' ? 'Porcentaje' : 'Monto'}
-            </Label>
+          <FormGroup className="mb-2">
+            <Label className="form-label">Foto (opcional)</Label>
             <Input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={generalDiscountType === 'PERCENTAGE' ? 100 : undefined}
-              value={generalDiscountValue}
-              onChange={(e) => setGeneralDiscountValue(e.target.value)}
+              innerRef={fileRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => onImageSelected(e.target.files?.[0])}
+            />
+            {draft.imagePreviewUrl && (
+              <div className="d-flex align-items-center gap-2 mt-1">
+                <img
+                  src={draft.imagePreviewUrl}
+                  alt="Vista previa"
+                  className="image-preview-mini"
+                />
+                <small className="text-muted">
+                  ~{formatBytes(draft.imageSize ?? 0)}
+                </small>
+                <Button
+                  color="link"
+                  className="text-danger p-0"
+                  onClick={() => {
+                    patchDraft({
+                      imageBase64: undefined,
+                      imageMimeType: undefined,
+                      imagePreviewUrl: undefined,
+                      imageSize: undefined,
+                    });
+                    if (fileRef.current) fileRef.current.value = '';
+                  }}
+                >
+                  Quitar
+                </Button>
+              </div>
+            )}
+          </FormGroup>
+
+          <div className="summary-compact mb-2">
+            {totals
+              ? `Subtotal ${formatMoney(totals.subtotal)} · Desc. ${formatMoney(
+                  totals.itemDiscountsTotal.plus(totals.generalDiscountAmount),
+                )} · Total ${formatMoney(totals.total)}`
+              : 'Sin artículos aún'}
+          </div>
+
+          <div className="form-row-2 mb-2">
+            <FormGroup className="mb-0">
+              <Label className="form-label">Desc. general</Label>
+              <Input
+                type="select"
+                value={generalDiscountType}
+                onChange={(e) =>
+                  setGeneralDiscountType(e.target.value as DiscountType)
+                }
+              >
+                <option value="NONE">Sin descuento</option>
+                <option value="FIXED">Fijo $</option>
+                <option value="PERCENTAGE">Porcentual %</option>
+              </Input>
+            </FormGroup>
+            <FormGroup className="mb-0">
+              <Label className="form-label">Valor</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                disabled={generalDiscountType === 'NONE'}
+                value={
+                  generalDiscountType === 'NONE' ? '' : generalDiscountValue
+                }
+                onChange={(e) => setGeneralDiscountValue(e.target.value)}
+              />
+            </FormGroup>
+          </div>
+
+          <Button
+            className="btn-touch btn-secondary-fan w-100 mb-3"
+            onClick={addOrUpdateArticle}
+          >
+            {editingKey ? 'Actualizar artículo' : 'Agregar artículo'}
+          </Button>
+
+          <div className="cart-list mb-2">
+            {items.length === 0 && (
+              <div className="cart-empty">Todavía no agregaste artículos.</div>
+            )}
+            {items.map((item) => {
+              const amount = lineAmount(item);
+              return (
+                <div key={item.key} className="cart-row">
+                  <button
+                    type="button"
+                    className="cart-row-main"
+                    onClick={() => editFromList(item)}
+                  >
+                    <span className="cart-name">
+                      {lineLabel(item, products)}
+                    </span>
+                    <span className="cart-meta">
+                      {item.quantity} u. · {amount ? formatMoney(amount) : '—'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn danger"
+                    aria-label="Quitar artículo"
+                    onClick={() => removeFromList(item.key)}
+                  >
+                    <IconTrash size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <FormGroup className="mb-0">
+            <Label className="form-label">Notas</Label>
+            <Input
+              type="textarea"
+              rows={1}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              maxLength={500}
             />
           </FormGroup>
-        )}
-
-        <FormGroup>
-          <Label className="form-label">Notas (opcional)</Label>
-          <Input
-            type="textarea"
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            maxLength={500}
-          />
-        </FormGroup>
-
-        <div className="summary-box">
-          <div className="row-line">
-            <span>Subtotal</span>
-            <span>{totals ? formatMoney(totals.subtotal) : '—'}</span>
-          </div>
-          <div className="row-line">
-            <span>Descuentos por artículos</span>
-            <span>
-              {totals ? formatMoney(totals.itemDiscountsTotal) : '—'}
-            </span>
-          </div>
-          <div className="row-line">
-            <span>Descuento general</span>
-            <span>
-              {totals ? formatMoney(totals.generalDiscountAmount) : '—'}
-            </span>
-          </div>
-          <div className="total-line">
-            <span>Total final</span>
-            <span>{totals ? formatMoney(totals.total) : '—'}</span>
-          </div>
         </div>
       </ModalBody>
       <ModalFooter className="d-flex gap-2">
@@ -353,7 +568,7 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
         <Button
           className="btn-touch btn-primary-fan flex-fill"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || items.length === 0}
         >
           {saving ? (
             <>
@@ -365,264 +580,5 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
         </Button>
       </ModalFooter>
     </Modal>
-  );
-}
-
-interface EditorProps {
-  index: number;
-  item: LineDraft;
-  products: Product[];
-  allProducts: Product[];
-  canRemove: boolean;
-  onChange: (patch: Partial<LineDraft>) => void;
-  onSelectProduct: (p: Product) => void;
-  onImage: (file: File | undefined) => void;
-  onRemove: () => void;
-}
-
-function SaleItemEditor({
-  index,
-  item,
-  products,
-  allProducts,
-  canRemove,
-  onChange,
-  onSelectProduct,
-  onImage,
-  onRemove,
-}: EditorProps) {
-  const [motifQuery, setMotifQuery] = useState(item.motifName);
-  const debouncedMotif = useDebounced(motifQuery, 250);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const productMotifsQuery = useQuery({
-    queryKey: ['product-motifs', item.productId],
-    queryFn: () => api.products.motifs(item.productId),
-    enabled: Boolean(item.productId),
-    staleTime: 60_000,
-  });
-
-  const motifSearchQuery = useQuery({
-    queryKey: ['motifs-search', debouncedMotif],
-    queryFn: () => api.motifs.search(debouncedMotif),
-    enabled: debouncedMotif.trim().length >= 1,
-    staleTime: 30_000,
-  });
-
-  const motifOptions = useMemo(() => {
-    const fromProduct = productMotifsQuery.data ?? [];
-    const fromSearch = motifSearchQuery.data ?? [];
-    const map = new Map<string, string>();
-    for (const m of [...fromProduct, ...fromSearch]) {
-      map.set(m.normalizedName, m.name);
-    }
-    return [...map.values()];
-  }, [productMotifsQuery.data, motifSearchQuery.data]);
-
-  const lineTotal = useMemo(() => {
-    try {
-      if (!item.unitPrice) return null;
-      return calculateSale({
-        items: [
-          {
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            discountType: item.discountType,
-            discountValue: item.discountValue || 0,
-          },
-        ],
-        generalDiscountType: 'NONE',
-        generalDiscountValue: 0,
-      }).items[0];
-    } catch {
-      return null;
-    }
-  }, [item]);
-
-  const selectedProduct = allProducts.find((p) => p.id === item.productId);
-
-  return (
-    <div className="item-card">
-      <div className="d-flex justify-content-between align-items-center mb-2">
-        <strong>Artículo {index + 1}</strong>
-        {canRemove && (
-          <Button color="link" className="text-danger p-0" onClick={onRemove}>
-            Eliminar
-          </Button>
-        )}
-      </div>
-
-      <FormGroup>
-        <Label className="form-label">Producto</Label>
-        <Input
-          type="select"
-          value={item.productId}
-          onChange={(e) => {
-            const product = allProducts.find((p) => p.id === e.target.value);
-            if (product) onSelectProduct(product);
-            else onChange({ productId: '' });
-          }}
-        >
-          <option value="">Seleccionar…</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} — {formatMoney(p.defaultPrice)}
-            </option>
-          ))}
-        </Input>
-        {selectedProduct && (
-          <small className="text-muted">
-            Precio catálogo: {formatMoney(selectedProduct.defaultPrice)} (podés
-            cambiarlo solo para esta venta)
-          </small>
-        )}
-      </FormGroup>
-
-      <FormGroup>
-        <Label className="form-label">Motivo / diseño</Label>
-        <Input
-          type="text"
-          list={`motifs-${item.key}`}
-          value={motifQuery}
-          placeholder="Ej: Nirvana, Airbag…"
-          onChange={(e) => {
-            setMotifQuery(e.target.value);
-            onChange({ motifName: e.target.value });
-          }}
-        />
-        <datalist id={`motifs-${item.key}`}>
-          {motifOptions.map((name) => (
-            <option key={name} value={name} />
-          ))}
-        </datalist>
-      </FormGroup>
-
-      <FormGroup>
-        <Label className="form-label">Cantidad</Label>
-        <div className="qty-control">
-          <Button
-            className="btn-secondary-fan"
-            onClick={() =>
-              onChange({ quantity: Math.max(1, item.quantity - 1) })
-            }
-          >
-            −
-          </Button>
-          <Input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            value={item.quantity}
-            onChange={(e) =>
-              onChange({ quantity: Math.max(1, Number(e.target.value) || 1) })
-            }
-            className="text-center"
-          />
-          <Button
-            className="btn-secondary-fan"
-            onClick={() => onChange({ quantity: item.quantity + 1 })}
-          >
-            +
-          </Button>
-        </div>
-      </FormGroup>
-
-      <FormGroup>
-        <Label className="form-label">Precio unitario</Label>
-        <Input
-          type="number"
-          inputMode="decimal"
-          min={0}
-          step="0.01"
-          value={item.unitPrice}
-          onChange={(e) => onChange({ unitPrice: e.target.value })}
-        />
-      </FormGroup>
-
-      <FormGroup>
-        <Label className="form-label">Descuento del artículo</Label>
-        <Input
-          type="select"
-          value={item.discountType}
-          onChange={(e) =>
-            onChange({ discountType: e.target.value as DiscountType })
-          }
-        >
-          <option value="NONE">Sin descuento</option>
-          <option value="FIXED">Fijo en pesos</option>
-          <option value="PERCENTAGE">Porcentual</option>
-        </Input>
-      </FormGroup>
-      {item.discountType !== 'NONE' && (
-        <FormGroup>
-          <Label className="form-label">Valor del descuento</Label>
-          <Input
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={item.discountType === 'PERCENTAGE' ? 100 : undefined}
-            value={item.discountValue}
-            onChange={(e) => onChange({ discountValue: e.target.value })}
-          />
-        </FormGroup>
-      )}
-
-      <div className="summary-box mb-3">
-        <div className="row-line">
-          <span>Subtotal</span>
-          <span>{lineTotal ? formatMoney(lineTotal.lineSubtotal) : '—'}</span>
-        </div>
-        <div className="row-line">
-          <span>Descuento</span>
-          <span>
-            {lineTotal ? formatMoney(lineTotal.discountAmount) : '—'}
-          </span>
-        </div>
-        <div className="total-line">
-          <span>Total artículo</span>
-          <span>{lineTotal ? formatMoney(lineTotal.lineTotal) : '—'}</span>
-        </div>
-      </div>
-
-      <FormGroup>
-        <Label className="form-label">Foto (opcional)</Label>
-        <Input
-          innerRef={fileRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={(e) => onImage(e.target.files?.[0])}
-        />
-        {item.imagePreviewUrl && (
-          <div className="mt-2">
-            <img
-              src={item.imagePreviewUrl}
-              alt="Vista previa"
-              className="image-preview"
-            />
-            <div className="d-flex justify-content-between align-items-center mt-2">
-              <small className="text-muted">
-                ~{formatBytes(item.imageSize ?? 0)}
-              </small>
-              <Button
-                color="link"
-                className="text-danger p-0"
-                onClick={() => {
-                  onChange({
-                    imageBase64: undefined,
-                    imageMimeType: undefined,
-                    imagePreviewUrl: undefined,
-                    imageSize: undefined,
-                  });
-                  if (fileRef.current) fileRef.current.value = '';
-                }}
-              >
-                Quitar foto
-              </Button>
-            </div>
-          </div>
-        )}
-      </FormGroup>
-    </div>
   );
 }

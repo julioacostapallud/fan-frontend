@@ -41,8 +41,13 @@ export const api = {
   },
 
   motifs: {
-    search: (q: string) =>
-      http.get<Motif[]>(`/motifs/search?q=${encodeURIComponent(q)}`),
+    search: (q: string, productId?: string) => {
+      const qs = new URLSearchParams();
+      if (q) qs.set('q', q);
+      if (productId) qs.set('productId', productId);
+      const query = qs.toString();
+      return http.get<Motif[]>(`/motifs/search${query ? `?${query}` : ''}`);
+    },
   },
 
   sales: {
