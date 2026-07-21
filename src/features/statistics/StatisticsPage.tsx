@@ -6,6 +6,7 @@ import { api } from '../../api/api';
 import { formatMoney } from '../shared/money';
 import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
+import { TopMotifsModal } from './TopMotifsModal';
 
 type Tab = 'general' | 'hoy' | string; // string = yyyy-MM-dd de un día cerrado
 
@@ -20,6 +21,7 @@ function rangeForTab(tab: Tab): { from?: string; to?: string } {
 
 export function StatisticsPage() {
   const [tab, setTab] = useState<Tab>('hoy');
+  const [topOpen, setTopOpen] = useState(false);
 
   const daysQuery = useQuery({
     queryKey: ['stats-days'],
@@ -57,6 +59,13 @@ export function StatisticsPage() {
           ←
         </Button>
         <h1>Stats ventas</h1>
+        <Button
+          type="button"
+          className="btn-top-motifs ms-auto"
+          onClick={() => setTopOpen(true)}
+        >
+          TOP
+        </Button>
       </div>
 
       <Nav pills className="stats-tabs mb-3">
@@ -142,6 +151,8 @@ export function StatisticsPage() {
           </Table>
         </div>
       )}
+
+      <TopMotifsModal isOpen={topOpen} onClose={() => setTopOpen(false)} />
     </div>
   );
 }

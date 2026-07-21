@@ -12,6 +12,7 @@ import type {
   SellersStats,
   StatsDays,
   StatsSummary,
+  TopMotifsByDay,
 } from './types';
 
 export const api = {
@@ -79,6 +80,8 @@ export const api = {
       return http.get<SellersStats>(`/statistics/sellers${q ? `?${q}` : ''}`);
     },
     days: () => http.get<StatsDays>('/statistics/days'),
+    topMotifs: (limit = 10) =>
+      http.get<TopMotifsByDay>(`/statistics/top-motifs?limit=${limit}`),
     restock: () => http.get<RestockItem[]>('/statistics/restock'),
     summary: (from?: string, to?: string) => {
       const qs = new URLSearchParams();

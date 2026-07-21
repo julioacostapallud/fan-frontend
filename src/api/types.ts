@@ -111,6 +111,16 @@ export interface StatsDays {
   today: string;
 }
 
+export interface TopMotifsByDay {
+  days: Array<{
+    day: string;
+    motifs: Array<{
+      motifName: string;
+      units: number;
+    }>;
+  }>;
+}
+
 export interface RestockItem {
   productName: string;
   motifName: string;
