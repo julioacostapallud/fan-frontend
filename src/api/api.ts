@@ -14,6 +14,7 @@ import type {
   StatsSummary,
   TopMotifsByDay,
   DailyTotals,
+  RevenueProgress,
 } from './types';
 
 export const api = {
@@ -84,6 +85,7 @@ export const api = {
     topMotifs: (limit = 10) =>
       http.get<TopMotifsByDay>(`/statistics/top-motifs?limit=${limit}`),
     dailyTotals: () => http.get<DailyTotals>('/statistics/daily-totals'),
+    revenueProgress: () => http.get<RevenueProgress>('/statistics/revenue-progress'),
     restock: () => http.get<RestockItem[]>('/statistics/restock'),
     summary: (from?: string, to?: string) => {
       const qs = new URLSearchParams();

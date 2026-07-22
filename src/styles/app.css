@@ -219,6 +219,10 @@ a {
   height: 220px;
 }
 
+.stats-chart-tall {
+  height: 260px;
+}
+
 .stats-table {
   color: var(--fan-ink);
   margin: 0;

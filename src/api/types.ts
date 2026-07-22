@@ -128,6 +128,14 @@ export interface DailyTotals {
   }>;
 }
 
+export interface RevenueProgress {
+  points: Array<{
+    at: string;
+    amount: string;
+    cumulative: string;
+  }>;
+}
+
 export interface RestockItem {
   productName: string;
   motifName: string;

@@ -8,6 +8,7 @@ import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import { TopMotifsModal } from './TopMotifsModal';
 import { DailyTotalsChart } from './DailyTotalsChart';
+import { RevenueProgressChart } from './RevenueProgressChart';
 
 type Tab = 'general' | 'hoy' | string; // string = yyyy-MM-dd de un día cerrado
 
@@ -149,7 +150,12 @@ export function StatisticsPage() {
             </div>
           </div>
 
-          {tab === 'general' && <DailyTotalsChart />}
+          {tab === 'general' && (
+            <>
+              <DailyTotalsChart />
+              <RevenueProgressChart />
+            </>
+          )}
         </>
       )}
 
