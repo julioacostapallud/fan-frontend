@@ -9,9 +9,7 @@ import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import { TopMotifsModal } from './TopMotifsModal';
 import { DailyTotalsChart } from './DailyTotalsChart';
 import { RevenueProgressChart } from './RevenueProgressChart';
-import { AnalyticsDashboard } from './analytics/AnalyticsDashboard';
 
-type ViewMode = 'sellers' | 'analysis';
 type Tab = 'general' | 'hoy' | string; // string = yyyy-MM-dd de un día cerrado
 
 function rangeForTab(tab: Tab): { from?: string; to?: string } {
@@ -24,7 +22,6 @@ function rangeForTab(tab: Tab): { from?: string; to?: string } {
 }
 
 export function StatisticsPage() {
-  const [view, setView] = useState<ViewMode>('sellers');
   const [tab, setTab] = useState<Tab>('hoy');
   const [topOpen, setTopOpen] = useState(false);
 
@@ -47,7 +44,6 @@ export function StatisticsPage() {
   const query = useQuery({
     queryKey: ['stats-sellers', tab, range.from, range.to],
     queryFn: () => api.statistics.sellers(range.from, range.to),
-    enabled: view === 'sellers',
   });
 
   const error = query.error
@@ -74,37 +70,6 @@ export function StatisticsPage() {
         </Button>
       </div>
 
-      <Nav pills className="stats-tabs mb-3">
-        <NavItem>
-          <NavLink
-            href="#"
-            active={view === 'sellers'}
-            onClick={(e) => {
-              e.preventDefault();
-              setView('sellers');
-            }}
-          >
-            Vendedores
-          </NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink
-            href="#"
-            active={view === 'analysis'}
-            onClick={(e) => {
-              e.preventDefault();
-              setView('analysis');
-            }}
-          >
-            Análisis
-          </NavLink>
-        </NavItem>
-      </Nav>
-
-      {view === 'analysis' ? (
-        <AnalyticsDashboard />
-      ) : (
-        <>
       <Nav pills className="stats-tabs mb-3">
         <NavItem>
           <NavLink
@@ -191,8 +156,6 @@ export function StatisticsPage() {
               <RevenueProgressChart />
             </>
           )}
-        </>
-      )}
         </>
       )}
 
