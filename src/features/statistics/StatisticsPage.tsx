@@ -7,10 +7,9 @@ import { formatMoney } from '../shared/money';
 import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import { TopMotifsModal } from './TopMotifsModal';
-import { DailyTotalsChart } from './DailyTotalsChart';
-import { RevenueProgressChart } from './RevenueProgressChart';
+import { GeneralDashboard } from './general/GeneralDashboard';
 
-type Tab = 'general' | 'hoy' | string; // string = yyyy-MM-dd de un día cerrado
+type Tab = 'general' | 'hoy' | string;
 
 function rangeForTab(tab: Tab): { from?: string; to?: string } {
   if (tab === 'general') return { from: undefined, to: undefined };
@@ -44,6 +43,7 @@ export function StatisticsPage() {
   const query = useQuery({
     queryKey: ['stats-sellers', tab, range.from, range.to],
     queryFn: () => api.statistics.sellers(range.from, range.to),
+    enabled: tab !== 'general',
   });
 
   const error = query.error
@@ -111,50 +111,47 @@ export function StatisticsPage() {
         </NavItem>
       </Nav>
 
-      {error && (
-        <div className="error-banner">
-          {error}{' '}
-          <button type="button" className="btn btn-link p-0" onClick={() => query.refetch()}>
-            Reintentar
-          </button>
-        </div>
-      )}
-
-      {query.isLoading && (
-        <div className="text-center py-4">
-          <Spinner />
-        </div>
-      )}
-
-      {query.data && (
+      {tab === 'general' ? (
+        <GeneralDashboard />
+      ) : (
         <>
-          <div className="stats-sellers">
-            <div className="stats-sellers-head">
-              <span>Vendedor</span>
-              <span className="text-end">Prod.</span>
-              <span className="text-end">Monto</span>
+          {error && (
+            <div className="error-banner">
+              {error}{' '}
+              <button type="button" className="btn btn-link p-0" onClick={() => query.refetch()}>
+                Reintentar
+              </button>
             </div>
-            {query.data.sellers.map((s) => (
-              <div key={s.userId} className="stats-seller-row">
-                <span className="stats-seller-name">{s.name}</span>
-                <span className="stats-seller-products">{s.products}</span>
-                <span className="stats-seller-amount">{formatMoney(s.amount)}</span>
-              </div>
-            ))}
-            <div className="stats-seller-row stats-seller-total">
-              <span className="stats-seller-name">Total</span>
-              <span className="stats-seller-products">{query.data.total.products}</span>
-              <span className="stats-seller-amount">
-                {formatMoney(query.data.total.amount)}
-              </span>
-            </div>
-          </div>
+          )}
 
-          {tab === 'general' && (
-            <>
-              <DailyTotalsChart />
-              <RevenueProgressChart />
-            </>
+          {query.isLoading && (
+            <div className="text-center py-4">
+              <Spinner />
+            </div>
+          )}
+
+          {query.data && (
+            <div className="stats-sellers">
+              <div className="stats-sellers-head">
+                <span>Vendedor</span>
+                <span className="text-end">Prod.</span>
+                <span className="text-end">Monto</span>
+              </div>
+              {query.data.sellers.map((s) => (
+                <div key={s.userId} className="stats-seller-row">
+                  <span className="stats-seller-name">{s.name}</span>
+                  <span className="stats-seller-products">{s.products}</span>
+                  <span className="stats-seller-amount">{formatMoney(s.amount)}</span>
+                </div>
+              ))}
+              <div className="stats-seller-row stats-seller-total">
+                <span className="stats-seller-name">Total</span>
+                <span className="stats-seller-products">{query.data.total.products}</span>
+                <span className="stats-seller-amount">
+                  {formatMoney(query.data.total.amount)}
+                </span>
+              </div>
+            </div>
           )}
         </>
       )}
