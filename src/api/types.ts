@@ -121,6 +121,13 @@ export interface TopMotifsByDay {
   }>;
 }
 
+export interface DailyTotals {
+  days: Array<{
+    day: string;
+    amount: string;
+  }>;
+}
+
 export interface RestockItem {
   productName: string;
   motifName: string;

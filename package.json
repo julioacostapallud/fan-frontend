@@ -22,6 +22,7 @@
     "react-hook-form": "^7.57.0",
     "react-router-dom": "^6.30.1",
     "reactstrap": "^9.2.3",
+    "recharts": "^2.15.4",
     "zod": "^3.25.56"
   },
   "devDependencies": {

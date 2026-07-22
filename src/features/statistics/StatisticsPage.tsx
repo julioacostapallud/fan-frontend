@@ -7,6 +7,7 @@ import { formatMoney } from '../shared/money';
 import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import { TopMotifsModal } from './TopMotifsModal';
+import { DailyTotalsChart } from './DailyTotalsChart';
 
 type Tab = 'general' | 'hoy' | string; // string = yyyy-MM-dd de un día cerrado
 
@@ -125,31 +126,34 @@ export function StatisticsPage() {
       )}
 
       {query.data && (
-        <div className="table-wrap">
-          <Table borderless className="stats-table mb-0">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th className="text-end">Productos</th>
-                <th className="text-end">Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {query.data.sellers.map((s) => (
-                <tr key={s.userId}>
-                  <td>{s.name}</td>
-                  <td className="text-end">{s.products}</td>
-                  <td className="text-end">{formatMoney(s.amount)}</td>
+        <>
+          {tab === 'general' && <DailyTotalsChart />}
+          <div className="table-wrap">
+            <Table borderless className="stats-table mb-0">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th className="text-end">Productos</th>
+                  <th className="text-end">Monto</th>
                 </tr>
-              ))}
-              <tr className="total-row">
-                <td>Total</td>
-                <td className="text-end">{query.data.total.products}</td>
-                <td className="text-end">{formatMoney(query.data.total.amount)}</td>
-              </tr>
-            </tbody>
-          </Table>
-        </div>
+              </thead>
+              <tbody>
+                {query.data.sellers.map((s) => (
+                  <tr key={s.userId}>
+                    <td>{s.name}</td>
+                    <td className="text-end">{s.products}</td>
+                    <td className="text-end">{formatMoney(s.amount)}</td>
+                  </tr>
+                ))}
+                <tr className="total-row">
+                  <td>Total</td>
+                  <td className="text-end">{query.data.total.products}</td>
+                  <td className="text-end">{formatMoney(query.data.total.amount)}</td>
+                </tr>
+              </tbody>
+            </Table>
+          </div>
+        </>
       )}
 
       <TopMotifsModal isOpen={topOpen} onClose={() => setTopOpen(false)} />
