@@ -117,6 +117,88 @@ a {
   overflow: hidden;
 }
 
+.stats-sellers {
+  background: var(--fan-surface);
+  border: 1px solid var(--fan-line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+
+.stats-sellers-head,
+.stats-seller-row {
+  display: grid;
+  grid-template-columns: 1fr 4.2rem minmax(5.5rem, auto);
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.7rem 0.9rem;
+}
+
+.stats-sellers-head {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fan-muted);
+  border-bottom: 1px solid var(--fan-line);
+  background: var(--fan-surface-2);
+}
+
+.stats-seller-row {
+  border-bottom: 1px solid var(--fan-line);
+  min-height: 52px;
+  color: var(--fan-ink);
+}
+
+.stats-seller-row:last-child {
+  border-bottom: none;
+}
+
+.stats-seller-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-seller-products {
+  text-align: right;
+  color: var(--fan-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+}
+
+.stats-seller-amount {
+  text-align: right;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--fan-accent-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stats-seller-total {
+  background: rgba(225, 29, 72, 0.08);
+  border-top: 1px solid var(--fan-line);
+}
+
+.stats-seller-total .stats-seller-name {
+  color: var(--fan-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.95rem;
+}
+
+.stats-seller-total .stats-seller-products,
+.stats-seller-total .stats-seller-amount {
+  color: var(--fan-accent-2);
+}
+
 .stats-chart-wrap {
   background: var(--fan-surface);
   border: 1px solid var(--fan-line);
@@ -142,6 +224,7 @@ a {
 .stats-table {
   color: var(--fan-ink);
   margin: 0;
+  background: transparent;
 }
 
 .stats-table th {
@@ -151,12 +234,15 @@ a {
   color: var(--fan-muted);
   border-bottom: 1px solid var(--fan-line) !important;
   padding: 0.65rem 0.75rem !important;
+  background: transparent;
 }
 
 .stats-table td {
   padding: 0.6rem 0.75rem !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-bottom: 1px solid var(--fan-line) !important;
   vertical-align: middle;
+  color: var(--fan-ink);
+  background: transparent;
 }
 
 .stats-table .total-row td {

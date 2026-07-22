@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Nav, NavItem, NavLink, Spinner, Table } from 'reactstrap';
+import { Button, Nav, NavItem, NavLink, Spinner } from 'reactstrap';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/api';
 import { formatMoney } from '../shared/money';
@@ -127,32 +127,29 @@ export function StatisticsPage() {
 
       {query.data && (
         <>
-          {tab === 'general' && <DailyTotalsChart />}
-          <div className="table-wrap">
-            <Table borderless className="stats-table mb-0">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th className="text-end">Productos</th>
-                  <th className="text-end">Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {query.data.sellers.map((s) => (
-                  <tr key={s.userId}>
-                    <td>{s.name}</td>
-                    <td className="text-end">{s.products}</td>
-                    <td className="text-end">{formatMoney(s.amount)}</td>
-                  </tr>
-                ))}
-                <tr className="total-row">
-                  <td>Total</td>
-                  <td className="text-end">{query.data.total.products}</td>
-                  <td className="text-end">{formatMoney(query.data.total.amount)}</td>
-                </tr>
-              </tbody>
-            </Table>
+          <div className="stats-sellers">
+            <div className="stats-sellers-head">
+              <span>Vendedor</span>
+              <span className="text-end">Prod.</span>
+              <span className="text-end">Monto</span>
+            </div>
+            {query.data.sellers.map((s) => (
+              <div key={s.userId} className="stats-seller-row">
+                <span className="stats-seller-name">{s.name}</span>
+                <span className="stats-seller-products">{s.products}</span>
+                <span className="stats-seller-amount">{formatMoney(s.amount)}</span>
+              </div>
+            ))}
+            <div className="stats-seller-row stats-seller-total">
+              <span className="stats-seller-name">Total</span>
+              <span className="stats-seller-products">{query.data.total.products}</span>
+              <span className="stats-seller-amount">
+                {formatMoney(query.data.total.amount)}
+              </span>
+            </div>
           </div>
+
+          {tab === 'general' && <DailyTotalsChart />}
         </>
       )}
 
