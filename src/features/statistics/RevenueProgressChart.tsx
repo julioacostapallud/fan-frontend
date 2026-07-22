@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { Spinner } from 'reactstrap';
 import { api } from '../../api/api';
+import { CHART_COLORS, tooltipStyle } from './analytics/chartColors';
 import { formatSaleDateTime } from '../shared/dates';
 import { formatMoney } from '../shared/money';
 
@@ -65,11 +66,11 @@ export function RevenueProgressChart() {
       <div className="stats-chart stats-chart-tall">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 28 }}>
-            <CartesianGrid stroke="rgba(242, 239, 232, 0.08)" vertical={false} />
+            <CartesianGrid stroke={CHART_COLORS.grid} vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: 'rgba(242, 239, 232, 0.58)', fontSize: 10 }}
-              axisLine={{ stroke: 'rgba(242, 239, 232, 0.12)' }}
+              tick={{ fill: CHART_COLORS.axis, fontSize: 10 }}
+              axisLine={{ stroke: CHART_COLORS.axisLine }}
               tickLine={false}
               interval={tickInterval}
               angle={-32}
@@ -79,18 +80,13 @@ export function RevenueProgressChart() {
             <YAxis
               domain={[0, 'auto']}
               tickFormatter={formatAxisAmount}
-              tick={{ fill: 'rgba(242, 239, 232, 0.58)', fontSize: 11 }}
+              tick={{ fill: CHART_COLORS.axis, fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               width={40}
             />
             <Tooltip
-              contentStyle={{
-                background: '#1a1a1f',
-                border: '1px solid rgba(242, 239, 232, 0.12)',
-                borderRadius: 10,
-                color: '#f2efe8',
-              }}
+              contentStyle={tooltipStyle}
               labelFormatter={(_, payload) => {
                 const at = payload?.[0]?.payload?.at as string | undefined;
                 return at ? formatSaleDateTime(at) : '';
@@ -103,10 +99,10 @@ export function RevenueProgressChart() {
             <Line
               type="stepAfter"
               dataKey="cumulative"
-              stroke="#fb7185"
+              stroke={CHART_COLORS.accent2}
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 4, fill: '#e11d48' }}
+              activeDot={{ r: 4, fill: CHART_COLORS.current }}
               isAnimationActive={false}
             />
           </LineChart>
