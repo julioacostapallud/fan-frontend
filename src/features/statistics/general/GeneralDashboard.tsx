@@ -31,17 +31,23 @@ function displayMotif(name: string): string {
 
 /** Recharts pasa el `name` de la serie (leyenda), no siempre el dataKey. */
 function seriesTooltipLabel(
-  name: string,
+  name: unknown,
   item?: { dataKey?: string | number },
   projectedWord: 'Proyectada' | 'Proyectado' = 'Proyectada',
 ): string {
-  const key = String(item?.dataKey ?? name);
-  if (key === 'real' || name === 'Real') return 'Real';
-  if (key === 'todayExtra' || name === 'Resto del día') return 'Proy. resto del día';
-  if (key === 'projected' || name === 'Proyectada' || name === 'Proyectado') {
+  const label = String(name ?? '');
+  const key = String(item?.dataKey ?? label);
+  if (key === 'real' || label === 'Real') return 'Real';
+  if (key === 'todayExtra' || label === 'Resto del día') return 'Proy. resto del día';
+  if (key === 'projected' || label === 'Proyectada' || label === 'Proyectado') {
     return projectedWord;
   }
-  return name;
+  return label;
+}
+
+function moneyTooltipValue(v: unknown): string {
+  const n = typeof v === 'number' ? v : Number(v);
+  return formatMoney(Number.isFinite(n) ? n : 0);
 }
 
 export function GeneralDashboard() {
@@ -200,8 +206,8 @@ export function GeneralDashboard() {
                 labelFormatter={(_, payload) =>
                   (payload?.[0]?.payload?.label as string) ?? ''
                 }
-                formatter={(v: number, name: string, item) => [
-                  formatMoney(v),
+                formatter={(v, name, item) => [
+                  moneyTooltipValue(v),
                   seriesTooltipLabel(name, item, 'Proyectada'),
                 ]}
               />
@@ -264,8 +270,8 @@ export function GeneralDashboard() {
                 labelFormatter={(_, payload) =>
                   (payload?.[0]?.payload?.label as string) ?? ''
                 }
-                formatter={(v: number, name: string, item) => [
-                  formatMoney(v),
+                formatter={(v, name, item) => [
+                  moneyTooltipValue(v),
                   seriesTooltipLabel(name, item, 'Proyectado'),
                 ]}
               />
@@ -309,13 +315,14 @@ export function GeneralDashboard() {
               <YAxis tickFormatter={axisMoney} tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }} width={48} />
               <Tooltip
                 contentStyle={generalTooltipStyle}
-                formatter={(v: number, name: string) => {
+                formatter={(v, name) => {
                   const labels: Record<string, string> = {
                     real: 'Real',
                     todayExtra: 'Proy. resto del día',
                     projected: 'Proyectado',
                   };
-                  return [formatMoney(v), labels[name] ?? name];
+                  const key = String(name);
+                  return [moneyTooltipValue(v), labels[key] ?? key];
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
