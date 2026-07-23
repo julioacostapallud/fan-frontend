@@ -52,21 +52,33 @@ export function GeneralDashboard() {
     );
   }
 
-  const { kpis, days, scenarios, products, motifs } = model;
+  const { kpis, days, hourly, scenarios, products, motifs } = model;
   const covered = kpis.gross >= RENT;
 
-  const cumData = days.map((d) => ({
-    label: d.label,
-    real: d.cumulativeReal,
-    projected: d.cumulativeProjected,
+  const dayTicks = hourly.filter((h) => h.hourSlot === 0).map((h) => h.id);
+
+  const cumData = hourly.map((h) => ({
+    id: h.id,
+    label: h.label,
+    tickLabel: h.tickLabel,
+    real: h.cumulativeReal,
+    projected: h.cumulativeProjected,
   }));
 
   const netData = [
-    { label: 'Inicio', real: -RENT, projected: -RENT },
-    ...days.map((d) => ({
-      label: d.label,
-      real: d.netReal,
-      projected: d.netProjected,
+    {
+      id: 'start',
+      label: 'Inicio',
+      tickLabel: '',
+      real: -RENT,
+      projected: -RENT,
+    },
+    ...hourly.map((h) => ({
+      id: h.id,
+      label: h.label,
+      tickLabel: h.tickLabel,
+      real: h.netReal,
+      projected: h.netProjected,
     })),
   ];
 
@@ -136,13 +148,22 @@ export function GeneralDashboard() {
       <section className="g-card">
         <header className="g-card-head">
           <h2>Facturación acumulada</h2>
-          <p>Real hasta hoy y proyección hasta el cierre del evento</p>
+          <p>Curva horaria · real hasta ahora y proyección con perfil del día</p>
         </header>
         <div className="g-chart g-chart-lg">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={cumData} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
               <CartesianGrid stroke={GENERAL_CHART.grid} vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }} />
+              <XAxis
+                dataKey="id"
+                ticks={dayTicks}
+                tickFormatter={(id: string) =>
+                  cumData.find((p) => p.id === id)?.tickLabel ?? ''
+                }
+                tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }}
+                interval={0}
+                minTickGap={12}
+              />
               <YAxis
                 tickFormatter={axisMoney}
                 tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }}
@@ -161,6 +182,9 @@ export function GeneralDashboard() {
               />
               <Tooltip
                 contentStyle={generalTooltipStyle}
+                labelFormatter={(_, payload) =>
+                  (payload?.[0]?.payload?.label as string) ?? ''
+                }
                 formatter={(v: number, name: string) => [
                   formatMoney(v),
                   name === 'real' ? 'Real' : 'Proyectada',
@@ -172,8 +196,9 @@ export function GeneralDashboard() {
                 dataKey="real"
                 name="Real"
                 stroke={GENERAL_CHART.real}
-                strokeWidth={3}
-                dot={{ r: 4 }}
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 4 }}
                 connectNulls={false}
               />
               <Line
@@ -181,9 +206,10 @@ export function GeneralDashboard() {
                 dataKey="projected"
                 name="Proyectada"
                 stroke={GENERAL_CHART.projected}
-                strokeWidth={2.5}
+                strokeWidth={2}
                 strokeDasharray="8 5"
                 dot={false}
+                activeDot={{ r: 3 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -194,13 +220,24 @@ export function GeneralDashboard() {
       <section className="g-card">
         <header className="g-card-head">
           <h2>Resultado neto</h2>
-          <p>Parte de −{formatMoney(RENT)}. Cruzar cero = alquiler cubierto</p>
+          <p>Misma base horaria · cruza cero = alquiler cubierto</p>
         </header>
         <div className="g-chart g-chart-lg">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={netData} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
               <CartesianGrid stroke={GENERAL_CHART.grid} vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }} />
+              <XAxis
+                dataKey="id"
+                ticks={['start', ...dayTicks]}
+                tickFormatter={(id: string) =>
+                  id === 'start'
+                    ? ''
+                    : netData.find((p) => p.id === id)?.tickLabel ?? ''
+                }
+                tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }}
+                interval={0}
+                minTickGap={12}
+              />
               <YAxis
                 tickFormatter={axisMoney}
                 tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }}
@@ -209,6 +246,9 @@ export function GeneralDashboard() {
               <ReferenceLine y={0} stroke={GENERAL_CHART.breakEven} strokeWidth={2} />
               <Tooltip
                 contentStyle={generalTooltipStyle}
+                labelFormatter={(_, payload) =>
+                  (payload?.[0]?.payload?.label as string) ?? ''
+                }
                 formatter={(v: number, name: string) => [
                   formatMoney(v),
                   name === 'real' ? 'Real' : 'Proyectado',
@@ -220,8 +260,9 @@ export function GeneralDashboard() {
                 dataKey="real"
                 name="Real"
                 stroke={GENERAL_CHART.netPositive}
-                strokeWidth={3}
-                dot={{ r: 3 }}
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 4 }}
                 connectNulls={false}
               />
               <Line
@@ -229,9 +270,10 @@ export function GeneralDashboard() {
                 dataKey="projected"
                 name="Proyectado"
                 stroke={GENERAL_CHART.projected}
-                strokeWidth={2.5}
+                strokeWidth={2}
                 strokeDasharray="8 5"
                 dot={false}
+                activeDot={{ r: 3 }}
               />
             </LineChart>
           </ResponsiveContainer>

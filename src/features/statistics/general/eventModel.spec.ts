@@ -69,9 +69,42 @@ describe('buildEventModel', () => {
       now,
     );
     expect(model.days).toHaveLength(9);
+    expect(model.hourly).toHaveLength(9 * 24);
     expect(model.kpis.revenue).toBe(1_300_000);
     expect(model.kpis.projectedRevenue).toBeGreaterThan(model.kpis.revenue);
     expect(model.scenarios).toHaveLength(3);
     expect(model.products[0].name).toBe('Gorra');
+  });
+
+  it('stops real hourly curve at current hour and continues projected', () => {
+    const now = new Date('2026-07-20T15:00:00.000Z'); // 12:00 AR → slot 6
+    const model = buildEventModel(
+      [
+        sale('2026-07-18T15:00:00.000Z', 500_000),
+        sale('2026-07-19T18:00:00.000Z', 400_000), // 15:00 AR afternoon-heavy
+        sale('2026-07-19T20:00:00.000Z', 200_000),
+        sale('2026-07-20T14:00:00.000Z', 200_000), // 11:00 AR
+      ],
+      now,
+    );
+
+    const todayHours = model.hourly.filter((h) => h.day === '2026-07-20');
+    const withReal = todayHours.filter((h) => h.cumulativeReal != null);
+    const withoutReal = todayHours.filter((h) => h.cumulativeReal == null);
+
+    expect(withReal.length).toBeGreaterThan(0);
+    expect(withoutReal.length).toBeGreaterThan(0);
+    expect(withReal[withReal.length - 1]?.cumulativeReal).toBe(1_300_000);
+    expect(model.hourly[model.hourly.length - 1]?.cumulativeProjected).toBeCloseTo(
+      model.kpis.projectedRevenue,
+      0,
+    );
+  });
+});
+
+describe('businessHourSlot', () => {
+  it('maps 12:00 AR to slot 6', async () => {
+    const { businessHourSlot } = await import('./eventModel');
+    expect(businessHourSlot(new Date('2026-07-20T15:00:00.000Z'))).toBe(6);
   });
 });
