@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -24,8 +25,13 @@ function axisMoney(v: number): string {
   return String(Math.round(v));
 }
 
+function displayMotif(name: string): string {
+  return name === '-' || name.trim() === '' ? 'Sin motivo' : name;
+}
+
 export function GeneralDashboard() {
   const { model, isLoading, error, refetch } = useGeneralEventModel();
+  const [driversTab, setDriversTab] = useState<'products' | 'motifs'>('products');
 
   if (isLoading) {
     return (
@@ -74,6 +80,8 @@ export function GeneralDashboard() {
   }));
 
   const probable = scenarios.find((s) => s.key === 'probable')!;
+  const maxProductShare = Math.max(1, ...products.map((p) => p.share));
+  const maxMotifShare = Math.max(1, ...motifs.map((m) => m.share));
 
   return (
     <div className="general-dash">
@@ -83,36 +91,45 @@ export function GeneralDashboard() {
       </p>
 
       <div className="general-kpis">
-        <Kpi title="Facturación actual" value={formatMoney(kpis.revenue)} />
-        <Kpi title="Ganancia bruta" value={formatMoney(kpis.gross)} tone="sky" />
-        <Kpi
-          title="Resultado neto"
-          value={formatMoney(kpis.net)}
-          tone={kpis.net >= 0 ? 'ok' : 'bad'}
-        />
-        <Kpi title="Alquiler" value={formatMoney(kpis.rent)} />
-        <Kpi
-          title="Proyección al 26/07"
-          value={formatMoney(kpis.projectedRevenue)}
-          tone="sky"
-        />
-        <Kpi
-          title="Neto proyectado"
-          value={formatMoney(kpis.projectedNet)}
-          tone={kpis.projectedNet >= 0 ? 'ok' : 'bad'}
-        />
-        <Kpi title="% alquiler cubierto" value={`${kpis.coveragePct.toFixed(0)}%`} />
-        <Kpi
-          title="Equilibrio estimado"
-          value={
-            kpis.breakEvenDay
-              ? `${formatIsoDayLabel(kpis.breakEvenDay)}${
-                  kpis.breakEvenHourLabel ? ` · ${kpis.breakEvenHourLabel}` : ''
-                }`
-              : 'Sin estimar'
-          }
-          tone="warn"
-        />
+        <div className="g-kpi g-kpi-hero">
+          <div className="g-kpi-title">Facturación actual</div>
+          <div className="g-kpi-value">{formatMoney(kpis.revenue)}</div>
+        </div>
+
+        <div className="general-kpis-mid">
+          <Kpi title="Ganancia bruta" value={formatMoney(kpis.gross)} tone="ok" />
+          <Kpi
+            title="Resultado neto"
+            value={formatMoney(kpis.net)}
+            tone={kpis.net >= 0 ? 'ok' : 'bad'}
+          />
+          <Kpi
+            title="Proyección al cierre"
+            value={formatMoney(kpis.projectedRevenue)}
+            tone="sky"
+          />
+        </div>
+
+        <div className="general-kpis-low">
+          <Kpi title="Alquiler" value={formatMoney(kpis.rent)} />
+          <Kpi title="% cubierto" value={`${kpis.coveragePct.toFixed(0)}%`} tone="warn" />
+          <Kpi
+            title="Neto proyectado"
+            value={formatMoney(kpis.projectedNet)}
+            tone={kpis.projectedNet >= 0 ? 'ok' : 'bad'}
+          />
+          <Kpi
+            title="Equilibrio estimado"
+            value={
+              kpis.breakEvenDay
+                ? `${formatIsoDayLabel(kpis.breakEvenDay)}${
+                    kpis.breakEvenHourLabel ? ` · ${kpis.breakEvenHourLabel}` : ''
+                  }`
+                : 'Sin estimar'
+            }
+            tone="warn"
+          />
+        </div>
       </div>
 
       {/* 1 */}
@@ -149,7 +166,7 @@ export function GeneralDashboard() {
                   name === 'real' ? 'Real' : 'Proyectada',
                 ]}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
               <Line
                 type="monotone"
                 dataKey="real"
@@ -197,7 +214,7 @@ export function GeneralDashboard() {
                   name === 'real' ? 'Real' : 'Proyectado',
                 ]}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
               <Line
                 type="monotone"
                 dataKey="real"
@@ -244,7 +261,7 @@ export function GeneralDashboard() {
                   return [formatMoney(v), labels[name] ?? name];
                 }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
               <Bar dataKey="real" name="Real" stackId="a" fill={GENERAL_CHART.real} radius={[0, 0, 0, 0]} maxBarSize={40} />
               <Bar dataKey="todayExtra" name="Resto del día" stackId="a" fill={GENERAL_CHART.today} maxBarSize={40} />
               <Bar dataKey="projected" name="Proyectado" stackId="a" fill={GENERAL_CHART.future} radius={[6, 6, 0, 0]} maxBarSize={40} />
@@ -287,22 +304,21 @@ export function GeneralDashboard() {
                 <p>
                   Ganancia acumulada <strong>{formatMoney(kpis.gross)}</strong>
                 </p>
-                <p>
+                <p className="be-remain">
                   Restan <strong>{formatMoney(kpis.grossToBreakEven)}</strong> de ganancia
                 </p>
                 <p>
-                  Equivale a facturar ≈ <strong>{formatMoney(kpis.revenueToBreakEven)}</strong>
+                  Facturación necesaria ≈ <strong>{formatMoney(kpis.revenueToBreakEven)}</strong>
                 </p>
               </>
             )}
-            <p className="be-meta">
-              Meta de facturación {formatMoney(BREAK_EVEN_REVENUE)}
-              {kpis.breakEvenDay
-                ? ` · Estimado ${formatIsoDayLabel(kpis.breakEvenDay)}${
-                    kpis.breakEvenHourLabel ? ` ${kpis.breakEvenHourLabel}` : ''
-                  }`
-                : ''}
-            </p>
+            {kpis.breakEvenDay ? (
+              <p className="be-estimate">
+                Equilibrio estimado {formatIsoDayLabel(kpis.breakEvenDay)}
+                {kpis.breakEvenHourLabel ? ` · ${kpis.breakEvenHourLabel}` : ''}
+              </p>
+            ) : null}
+            <p className="be-meta">Meta de facturación {formatMoney(BREAK_EVEN_REVENUE)}</p>
           </div>
         </div>
       </section>
@@ -353,50 +369,72 @@ export function GeneralDashboard() {
       <section className="g-card">
         <header className="g-card-head">
           <h2>Qué genera las ventas</h2>
-          <p>Artículos y motivos que sostienen la facturación del evento</p>
+          <p>Artículos y motivos que sostienen la facturación</p>
         </header>
-        <div className="drivers-grid">
-          <div>
-            <h3 className="drivers-title">Top artículos</h3>
-            <ul className="drivers-list">
-              {products.map((p, i) => (
-                <li key={p.name}>
-                  <span className="drivers-rank" style={{ color: GENERAL_CHART.product }}>
-                    {i + 1}
-                  </span>
-                  <div className="drivers-body">
-                    <strong>{p.name}</strong>
-                    <span>
-                      {p.units} u. · {formatMoney(p.revenue)} · {p.share.toFixed(0)}% · bruta{' '}
-                      {formatMoney(p.gross)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-              {!products.length && <li className="drivers-empty">Sin datos</li>}
-            </ul>
-          </div>
-          <div>
-            <h3 className="drivers-title">Top motivos</h3>
-            <ul className="drivers-list">
-              {motifs.map((m, i) => (
-                <li key={m.name}>
-                  <span className="drivers-rank" style={{ color: GENERAL_CHART.motif }}>
-                    {i + 1}
-                  </span>
-                  <div className="drivers-body">
-                    <strong>{m.name}</strong>
-                    <span>
-                      {m.units} u. · {formatMoney(m.revenue)} · {m.share.toFixed(0)}% · bruta{' '}
-                      {formatMoney(m.gross)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-              {!motifs.length && <li className="drivers-empty">Sin datos</li>}
-            </ul>
-          </div>
+        <div className="drivers-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={driversTab === 'products'}
+            className={driversTab === 'products' ? 'is-active' : ''}
+            onClick={() => setDriversTab('products')}
+          >
+            Top artículos
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={driversTab === 'motifs'}
+            className={driversTab === 'motifs' ? 'is-active' : ''}
+            onClick={() => setDriversTab('motifs')}
+          >
+            Top motivos
+          </button>
         </div>
+
+        {driversTab === 'products' ? (
+          <ul className="drivers-list">
+            {products.map((p, i) => (
+              <li key={p.name} className={i < 3 ? 'is-top' : ''}>
+                <span className="drivers-rank">{i + 1}</span>
+                <div className="drivers-body">
+                  <div className="drivers-line">
+                    <strong>{p.name}</strong>
+                    <span className="drivers-amount">{formatMoney(p.revenue)}</span>
+                  </div>
+                  <div className="drivers-meta">
+                    {p.units} u. · {p.share.toFixed(0)}% · bruta {formatMoney(p.gross)}
+                  </div>
+                  <div className="drivers-bar">
+                    <span style={{ width: `${(p.share / maxProductShare) * 100}%` }} />
+                  </div>
+                </div>
+              </li>
+            ))}
+            {!products.length && <li className="drivers-empty">Sin datos</li>}
+          </ul>
+        ) : (
+          <ul className="drivers-list">
+            {motifs.map((m, i) => (
+              <li key={m.name} className={i < 3 ? 'is-top' : ''}>
+                <span className="drivers-rank">{i + 1}</span>
+                <div className="drivers-body">
+                  <div className="drivers-line">
+                    <strong>{displayMotif(m.name)}</strong>
+                    <span className="drivers-amount">{formatMoney(m.revenue)}</span>
+                  </div>
+                  <div className="drivers-meta">
+                    {m.units} u. · {m.share.toFixed(0)}% · bruta {formatMoney(m.gross)}
+                  </div>
+                  <div className="drivers-bar">
+                    <span style={{ width: `${(m.share / maxMotifShare) * 100}%` }} />
+                  </div>
+                </div>
+              </li>
+            ))}
+            {!motifs.length && <li className="drivers-empty">Sin datos</li>}
+          </ul>
+        )}
       </section>
     </div>
   );

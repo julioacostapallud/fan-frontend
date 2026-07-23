@@ -9,6 +9,10 @@ type Props = {
   onClose: () => void;
 };
 
+function displayMotif(name: string): string {
+  return name === '-' || name.trim() === '' ? 'Sin motivo' : name;
+}
+
 export function TopMotifsModal({ isOpen, onClose }: Props) {
   const query = useQuery({
     queryKey: ['stats-top-motifs'],
@@ -29,12 +33,15 @@ export function TopMotifsModal({ isOpen, onClose }: Props) {
     <Modal
       isOpen={isOpen}
       toggle={onClose}
-      fullscreen="sm"
-      className="fullscreen-modal"
+      className="top-motifs-sheet"
+      contentClassName="top-motifs-sheet-content"
       scrollable
+      centered
     >
-      <ModalHeader toggle={onClose}>Top motivos</ModalHeader>
-      <ModalBody>
+      <ModalHeader toggle={onClose} className="top-motifs-sheet-head">
+        Top motivos
+      </ModalHeader>
+      <ModalBody className="top-motifs-sheet-body">
         {query.isLoading && (
           <div className="text-center py-4">
             <Spinner />
@@ -63,7 +70,7 @@ export function TopMotifsModal({ isOpen, onClose }: Props) {
               {block.motifs.map((m, i) => (
                 <li key={`${block.day}-${m.motifName}`}>
                   <span className="top-rank">{i + 1}</span>
-                  <span className="top-name">{m.motifName}</span>
+                  <span className="top-name">{displayMotif(m.motifName)}</span>
                   <span className="top-units">{m.units}</span>
                 </li>
               ))}

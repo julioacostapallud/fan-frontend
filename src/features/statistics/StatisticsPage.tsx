@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Nav, NavItem, NavLink, Spinner } from 'reactstrap';
 import { useEffect, useMemo, useState } from 'react';
@@ -8,6 +7,7 @@ import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import { TopMotifsModal } from './TopMotifsModal';
 import { GeneralDashboard } from './general/GeneralDashboard';
+import { AppHeader } from '../shared/AppHeader';
 
 type Tab = 'general' | 'hoy' | string;
 
@@ -56,11 +56,10 @@ export function StatisticsPage() {
 
   return (
     <div className="app-shell">
+      <AppHeader />
+
       <div className="page-header">
-        <Button tag={Link} to="/" color="link" className="p-0">
-          ←
-        </Button>
-        <h1>Stats ventas</h1>
+        <h1 className="page-title">Stats ventas</h1>
         <Button
           type="button"
           className="btn-top-motifs ms-auto"

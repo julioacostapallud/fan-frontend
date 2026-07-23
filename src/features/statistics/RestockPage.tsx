@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Spinner, Table } from 'reactstrap';
+import { Spinner, Table } from 'reactstrap';
 import { api } from '../../api/api';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
+import { AppHeader } from '../shared/AppHeader';
 
 export function RestockPage() {
   const query = useQuery({
@@ -20,13 +20,9 @@ export function RestockPage() {
 
   return (
     <div className="app-shell">
-      <div className="page-header">
-        <Button tag={Link} to="/" color="link" className="p-0">
-          ←
-        </Button>
-        <h1>Reposición</h1>
-      </div>
+      <AppHeader />
 
+      <h1 className="page-title">Reposición</h1>
       <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
         Unidades vendidas por producto y motivo (todo el período).
       </p>
@@ -64,7 +60,7 @@ export function RestockPage() {
               {query.data.map((row) => (
                 <tr key={`${row.productName}-${row.motifName}`}>
                   <td>{row.productName}</td>
-                  <td>{row.motifName}</td>
+                  <td>{row.motifName === '-' || !row.motifName.trim() ? 'Sin motivo' : row.motifName}</td>
                   <td className="text-end">{row.units}</td>
                 </tr>
               ))}

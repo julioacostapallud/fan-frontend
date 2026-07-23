@@ -6,17 +6,17 @@ import { api } from '../../api/api';
 import { SaleCard } from './SaleCard';
 import { NewSaleModal } from './NewSaleModal';
 import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
+import { AppHeader } from '../shared/AppHeader';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import type { SaleDetail, SaleListItem } from '../../api/types';
-import { useAuth } from '../auth/AuthContext';
 
 export function HomePage() {
-  const { user, logout } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<SaleDetail | null>(null);
   const [deletingSale, setDeletingSale] = useState<SaleListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [savedFlash, setSavedFlash] = useState(false);
   const queryClient = useQueryClient();
 
   const salesQuery = useInfiniteQuery({
@@ -70,21 +70,7 @@ export function HomePage() {
 
   return (
     <div className="app-shell">
-      <nav className="top-nav">
-        <Link to="/estadisticas">Ventas</Link>
-        <Link to="/reposicion">Reposición</Link>
-        <Link to="/admin">Productos</Link>
-        <button type="button" className="nav-user" onClick={logout}>
-          {user?.displayName} · salir
-        </button>
-      </nav>
-
-      <header className="brand-lockup">
-        <div className="brand-name">
-          Fan<span>!</span>
-        </div>
-        <div className="brand-edition">Bienal 2026</div>
-      </header>
+      <AppHeader showBrand />
 
       <div className="cta-stack">
         <Button
@@ -97,14 +83,16 @@ export function HomePage() {
         >
           Nueva venta
         </Button>
-        <Button
-          tag={Link}
-          to="/estadisticas"
-          className="btn-touch btn-secondary-fan"
-        >
+        <Button tag={Link} to="/estadisticas" className="btn-touch btn-secondary-fan">
           Stats ventas
         </Button>
       </div>
+
+      {savedFlash && (
+        <div className="flash-ok" role="status">
+          Venta guardada
+        </div>
+      )}
 
       <h2 className="section-title">Ventas</h2>
 
@@ -138,14 +126,16 @@ export function HomePage() {
         </div>
       )}
 
-      {sales.map((sale) => (
-        <SaleCard
-          key={sale.id}
-          sale={sale}
-          onEdit={openEdit}
-          onDelete={setDeletingSale}
-        />
-      ))}
+      <div className="sales-list">
+        {sales.map((sale) => (
+          <SaleCard
+            key={sale.id}
+            sale={sale}
+            onEdit={openEdit}
+            onDelete={setDeletingSale}
+          />
+        ))}
+      </div>
 
       {salesQuery.hasNextPage && (
         <Button
@@ -174,9 +164,12 @@ export function HomePage() {
         onSaved={async () => {
           setModalOpen(false);
           setEditingSale(null);
+          setSavedFlash(true);
+          window.setTimeout(() => setSavedFlash(false), 1800);
           await queryClient.invalidateQueries({ queryKey: ['sales'] });
           await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
           await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
+          await queryClient.invalidateQueries({ queryKey: ['general-event-sales'] });
         }}
       />
 

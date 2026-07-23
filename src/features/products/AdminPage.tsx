@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -16,6 +15,7 @@ import { api } from '../../api/api';
 import type { Product } from '../../api/types';
 import { formatMoney } from '../shared/money';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
+import { AppHeader } from '../shared/AppHeader';
 
 export function AdminPage() {
   const [q, setQ] = useState('');
@@ -106,12 +106,7 @@ export function AdminPage() {
 
   return (
     <div className="app-shell">
-      <div className="page-header">
-        <Button tag={Link} to="/" color="link" className="p-0">
-          ←
-        </Button>
-        <h1>Productos</h1>
-      </div>
+      <AppHeader />
 
       <FormGroup>
         <Input

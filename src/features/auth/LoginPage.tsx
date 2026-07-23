@@ -8,6 +8,7 @@ export function LoginPage() {
   const { user, loading, login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,19 +45,33 @@ export function LoginPage() {
 
   return (
     <div className="app-shell login-shell">
-      <header className="brand-lockup">
-        <div className="brand-name">
-          Fan<span>!</span>
+      <div className="login-brand">
+        <img
+          src="/brand/machos-alfa-fan.png"
+          alt="Machos Alfa Fan!"
+          className="login-submark"
+        />
+        <div className="brand-lockup login-wordmark">
+          <div className="brand-name">
+            Fan<span>!</span>
+          </div>
+          <div className="brand-edition">Bienal 2026</div>
         </div>
-        <div className="brand-edition">Bienal 2026</div>
-      </header>
+      </div>
 
       <form className="login-card" onSubmit={onSubmit}>
-        <h1 className="section-title mb-3">Ingresar</h1>
-        {error && <div className="error-banner">{error}</div>}
+        <h1 className="login-title">Ingresar</h1>
+        {error && (
+          <div className="error-banner" role="alert">
+            {error}
+          </div>
+        )}
         <FormGroup>
-          <Label className="form-label">Usuario</Label>
+          <Label className="form-label" for="login-user">
+            Usuario
+          </Label>
           <Input
+            id="login-user"
             autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -64,20 +79,29 @@ export function LoginPage() {
           />
         </FormGroup>
         <FormGroup>
-          <Label className="form-label">Contraseña</Label>
-          <Input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <Label className="form-label" for="login-pass">
+            Contraseña
+          </Label>
+          <div className="input-with-action">
+            <Input
+              id="login-pass"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              className="input-action-btn"
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              onClick={() => setShowPassword((v) => !v)}
+            >
+              {showPassword ? 'Ocultar' : 'Ver'}
+            </button>
+          </div>
         </FormGroup>
-        <Button
-          type="submit"
-          className="btn-touch btn-primary-fan w-100"
-          disabled={busy}
-        >
+        <Button type="submit" className="btn-touch btn-primary-fan w-100" disabled={busy}>
           {busy ? (
             <>
               <Spinner size="sm" className="me-2" /> Entrando…
