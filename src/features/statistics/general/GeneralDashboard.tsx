@@ -29,6 +29,21 @@ function displayMotif(name: string): string {
   return name === '-' || name.trim() === '' ? 'Sin motivo' : name;
 }
 
+/** Recharts pasa el `name` de la serie (leyenda), no siempre el dataKey. */
+function seriesTooltipLabel(
+  name: string,
+  item?: { dataKey?: string | number },
+  projectedWord: 'Proyectada' | 'Proyectado' = 'Proyectada',
+): string {
+  const key = String(item?.dataKey ?? name);
+  if (key === 'real' || name === 'Real') return 'Real';
+  if (key === 'todayExtra' || name === 'Resto del día') return 'Proy. resto del día';
+  if (key === 'projected' || name === 'Proyectada' || name === 'Proyectado') {
+    return projectedWord;
+  }
+  return name;
+}
+
 export function GeneralDashboard() {
   const { model, isLoading, error, refetch } = useGeneralEventModel();
   const [driversTab, setDriversTab] = useState<'products' | 'motifs'>('products');
@@ -185,9 +200,9 @@ export function GeneralDashboard() {
                 labelFormatter={(_, payload) =>
                   (payload?.[0]?.payload?.label as string) ?? ''
                 }
-                formatter={(v: number, name: string) => [
+                formatter={(v: number, name: string, item) => [
                   formatMoney(v),
-                  name === 'real' ? 'Real' : 'Proyectada',
+                  seriesTooltipLabel(name, item, 'Proyectada'),
                 ]}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
@@ -249,9 +264,9 @@ export function GeneralDashboard() {
                 labelFormatter={(_, payload) =>
                   (payload?.[0]?.payload?.label as string) ?? ''
                 }
-                formatter={(v: number, name: string) => [
+                formatter={(v: number, name: string, item) => [
                   formatMoney(v),
-                  name === 'real' ? 'Real' : 'Proyectado',
+                  seriesTooltipLabel(name, item, 'Proyectado'),
                 ]}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />

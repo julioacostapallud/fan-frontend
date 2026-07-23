@@ -57,11 +57,13 @@ export function AppHeader({ showBrand = false }: Props) {
       </nav>
 
       {showBrand && (
-        <div className="brand-lockup">
-          <div className="brand-name">
-            Fan<span>!</span>
+        <div className="brand-lockup brand-lockup-home">
+          <div className="brand-lockup-text">
+            <div className="brand-name">
+              Fan<span>!</span>
+            </div>
+            <div className="brand-edition">Bienal 2026</div>
           </div>
-          <div className="brand-edition">Bienal 2026</div>
           <div className="brand-submark">
             <img src="/brand/machos-alfa-fan.png" alt="Machos Alfa Fan!" />
           </div>

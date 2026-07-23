@@ -233,6 +233,30 @@ a {
   margin: var(--space-4) 0 var(--space-3);
 }
 
+.brand-lockup-home {
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.brand-lockup-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.brand-lockup-home .brand-name {
+  font-size: clamp(1.85rem, 8vw, 2.35rem);
+}
+
+.brand-lockup-home .brand-edition {
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+}
+
 .brand-lockup .brand-name {
   font-family: var(--font-display);
   font-weight: 700;
@@ -257,16 +281,17 @@ a {
 }
 
 .brand-submark {
-  width: 100%;
+  flex: 0 0 auto;
   display: flex;
-  justify-content: flex-start;
-  margin-top: var(--space-2);
+  align-items: center;
+  margin: 0;
 }
 
 .brand-submark img {
-  width: min(160px, 48vw);
+  width: clamp(72px, 22vw, 96px);
   height: auto;
-  opacity: 0.92;
+  display: block;
+  opacity: 0.95;
 }
 
 /* —— Login —— */
