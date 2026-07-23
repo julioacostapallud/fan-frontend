@@ -97,9 +97,9 @@ export interface HourPoint {
   label: string;
   revenueInHour: number;
   cumulativeReal: number | null;
-  cumulativeProjected: number;
+  cumulativeProjected: number | null;
   netReal: number | null;
-  netProjected: number;
+  netProjected: number | null;
   kind: 'past' | 'today' | 'future';
 }
 
@@ -208,7 +208,9 @@ function projectRemainingDaily(
       } else {
         const pace = todayReal / todayProgress;
         const blended = pace * 0.55 + baseline * 0.45;
-        out.set(d, Math.max(todayReal, blended));
+        // Evita explosiones cuando el ritmo matutino no representa el día.
+        const capped = Math.min(blended, Math.max(baseline * 1.35, todayReal));
+        out.set(d, Math.max(todayReal, capped));
       }
     } else {
       let trend = 1;
@@ -320,6 +322,9 @@ function buildHourlySeries(
       const actual = hourlyReal.get(hourKey(day, slot)) ?? 0;
       const isRealHour =
         kind === 'past' || (kind === 'today' && slot <= currentSlot);
+      /** Proyectada solo desde “ahora” en adelante (no duplicar el pasado). */
+      const isProjectedHour =
+        kind === 'future' || (kind === 'today' && slot >= currentSlot);
 
       if (isRealHour) cumReal += actual;
       cumProj += projHours[slot];
@@ -336,9 +341,9 @@ function buildHourlySeries(
         label: `${shortLabel(day)} · ${timeLabel}`,
         revenueInHour: isRealHour ? actual : 0,
         cumulativeReal: isRealHour ? cumReal : null,
-        cumulativeProjected: cumProj,
+        cumulativeProjected: isProjectedHour ? cumProj : null,
         netReal: isRealHour ? netOf(cumReal) : null,
-        netProjected: netOf(cumProj),
+        netProjected: isProjectedHour ? netOf(cumProj) : null,
         kind,
       });
     }
@@ -371,13 +376,13 @@ function findBreakEven(
   return null;
 }
 
-/** Equilibrio más preciso sobre la serie horaria proyectada. */
+/** Equilibrio más preciso sobre la serie horaria proyectada (incluye huecos null). */
 function findBreakEvenHourly(
   hourly: HourPoint[],
 ): { day: string; hourLabel: string } | null {
   const need = BREAK_EVEN_REVENUE;
   for (const p of hourly) {
-    if (p.cumulativeProjected >= need) {
+    if (p.cumulativeProjected != null && p.cumulativeProjected >= need) {
       return {
         day: p.day,
         hourLabel: `${String(p.wallHour).padStart(2, '0')}:00`,
@@ -461,7 +466,8 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
 
   const completedDays = EVENT_BUSINESS_DAYS.filter((d) => d < today) as string[];
   const weights = buildHourlyProfile(hourlyReal, dailyReal, completedDays);
-  const progress = profileProgress(weights, today, now);
+  // Cierre de “hoy”: progreso por reloj (no por perfil), para no inflar la tarde.
+  const progress = dayProgress(today, now);
   const projectedDaily = projectRemainingDaily(dailyReal, today, progress);
 
   let cumReal = 0;

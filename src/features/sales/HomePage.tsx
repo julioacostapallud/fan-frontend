@@ -70,23 +70,34 @@ export function HomePage() {
 
   return (
     <div className="app-shell">
-      <AppHeader showBrand />
+      <AppHeader />
 
-      <div className="cta-stack">
-        <Button
-          color="primary"
-          className="btn-touch btn-primary-fan"
-          onClick={() => {
-            setEditingSale(null);
-            setModalOpen(true);
-          }}
-        >
-          Nueva venta
-        </Button>
-        <Button tag={Link} to="/estadisticas" className="btn-touch btn-secondary-fan">
-          Stats ventas
-        </Button>
-      </div>
+      <section className="home-hero" aria-label="Acciones">
+        <div className="home-hero-brand">
+          <img
+            src="/brand/machos-alfa-fan.png"
+            alt="Machos Alfa Fan!"
+            className="home-hero-mark"
+          />
+          <p className="home-hero-event">Bienal del Chaco 2026</p>
+        </div>
+
+        <div className="home-hero-actions">
+          <Button
+            color="primary"
+            className="btn-touch btn-primary-fan"
+            onClick={() => {
+              setEditingSale(null);
+              setModalOpen(true);
+            }}
+          >
+            Nueva venta
+          </Button>
+          <Button tag={Link} to="/estadisticas" className="btn-touch btn-secondary-fan">
+            Stats ventas
+          </Button>
+        </div>
+      </section>
 
       {savedFlash && (
         <div className="flash-ok" role="status">

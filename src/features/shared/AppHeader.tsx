@@ -1,12 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
-type Props = {
-  /** Mostrar bloque de marca debajo del nav (home) */
-  showBrand?: boolean;
-};
-
-export function AppHeader({ showBrand = false }: Props) {
+export function AppHeader() {
   const { user, logout } = useAuth();
   const location = useLocation();
 
@@ -19,7 +14,7 @@ export function AppHeader({ showBrand = false }: Props) {
   }
 
   return (
-    <header className={`app-header${showBrand ? ' app-header-home' : ''}`}>
+    <header className="app-header">
       <div className="app-header-bar">
         <Link to="/" className="app-header-brand" aria-label="Fan! inicio">
           <img
@@ -55,15 +50,6 @@ export function AppHeader({ showBrand = false }: Props) {
           </Link>
         </div>
       </nav>
-
-      {showBrand && (
-        <div className="brand-lockup brand-lockup-home">
-          <div className="brand-submark">
-            <img src="/brand/machos-alfa-fan.png" alt="Machos Alfa Fan!" />
-          </div>
-          <p className="brand-event">Bienal del Chaco 2026</p>
-        </div>
-      )}
     </header>
   );
 }

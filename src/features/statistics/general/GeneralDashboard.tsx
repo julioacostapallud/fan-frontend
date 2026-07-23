@@ -169,7 +169,7 @@ export function GeneralDashboard() {
       <section className="g-card">
         <header className="g-card-head">
           <h2>Facturación acumulada</h2>
-          <p>Curva horaria · real hasta ahora y proyección con perfil del día</p>
+          <p>Real hasta ahora · proyectada solo desde este momento</p>
         </header>
         <div className="g-chart g-chart-lg">
           <ResponsiveContainer width="100%" height="100%">
@@ -241,7 +241,7 @@ export function GeneralDashboard() {
       <section className="g-card">
         <header className="g-card-head">
           <h2>Resultado neto</h2>
-          <p>Misma base horaria · cruza cero = alquiler cubierto</p>
+          <p>Real hasta ahora · proyectado desde este momento</p>
         </header>
         <div className="g-chart g-chart-lg">
           <ResponsiveContainer width="100%" height="100%">
