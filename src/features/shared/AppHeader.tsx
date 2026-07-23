@@ -58,15 +58,10 @@ export function AppHeader({ showBrand = false }: Props) {
 
       {showBrand && (
         <div className="brand-lockup brand-lockup-home">
-          <div className="brand-lockup-text">
-            <div className="brand-name">
-              Fan<span>!</span>
-            </div>
-            <div className="brand-edition">Bienal 2026</div>
-          </div>
           <div className="brand-submark">
             <img src="/brand/machos-alfa-fan.png" alt="Machos Alfa Fan!" />
           </div>
+          <p className="brand-event">Bienal del Chaco 2026</p>
         </div>
       )}
     </header>

@@ -234,27 +234,32 @@ a {
 }
 
 .brand-lockup-home {
+  flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--space-3);
   margin: var(--space-3) 0 var(--space-4);
+  text-align: center;
 }
 
-.brand-lockup-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
+.brand-lockup-home .brand-submark {
+  justify-content: center;
 }
 
-.brand-lockup-home .brand-name {
-  font-size: clamp(1.85rem, 8vw, 2.35rem);
+.brand-lockup-home .brand-submark img {
+  width: clamp(140px, 42vw, 200px);
+  height: auto;
 }
 
-.brand-lockup-home .brand-edition {
-  font-size: 0.82rem;
-  letter-spacing: 0.1em;
+.brand-event {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(0.95rem, 3.6vw, 1.1rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
 .brand-lockup .brand-name {
