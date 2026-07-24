@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { launchProfitFireworks } from './fireworks';
 
 const STORAGE_KEY = 'fan-profit-celebrated-v1';
-const CELEBRATE_MS = 14000;
+const CELEBRATE_MS = 7000;
 export const REPLAY_CELEBRATE_EVENT = 'fan-replay-profit-celebrate';
 
 type Options = {
