@@ -51,12 +51,11 @@ function moneyTooltipValue(v: unknown): string {
   return formatMoney(Number.isFinite(n) ? n : 0);
 }
 
-export function GeneralDashboard({ forceCelebrate = false }: { forceCelebrate?: boolean }) {
+export function GeneralDashboard() {
   const { model, isLoading, error, refetch } = useGeneralEventModel();
   const [driversTab, setDriversTab] = useState<'products' | 'motifs'>('products');
 
   const { burst } = useProfitCelebration({
-    force: forceCelebrate,
     net: model?.kpis.net ?? null,
   });
 
@@ -141,7 +140,7 @@ export function GeneralDashboard({ forceCelebrate = false }: { forceCelebrate?: 
             title="Resultado neto"
             value={formatMoney(kpis.net)}
             tone={kpis.net > 0 ? 'ok' : 'bad'}
-            spotlight={forceCelebrate || kpis.net > 0}
+            spotlight={kpis.net > 0}
             burst={burst}
           />
           <Kpi
