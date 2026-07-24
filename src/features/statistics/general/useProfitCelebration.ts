@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { launchProfitFireworks } from './fireworks';
 
 const STORAGE_KEY = 'fan-profit-celebrated-v1';
-const CELEBRATE_MS = 7000;
+/** Iluminación del KPI Resultado neto */
+const SPOTLIGHT_MS = 7000;
+/** Duración de los fuegos artificiales */
+const FIREWORKS_MS = 4000;
 export const REPLAY_CELEBRATE_EVENT = 'fan-replay-profit-celebrate';
 
 type Options = {
@@ -25,8 +28,8 @@ export function useProfitCelebration({ force = false, net }: Options) {
   const runCelebrate = () => {
     if (clearTimer.current) window.clearTimeout(clearTimer.current);
     setCelebrating(true);
-    launchProfitFireworks(CELEBRATE_MS - 400);
-    clearTimer.current = window.setTimeout(() => setCelebrating(false), CELEBRATE_MS);
+    launchProfitFireworks(FIREWORKS_MS);
+    clearTimer.current = window.setTimeout(() => setCelebrating(false), SPOTLIGHT_MS);
   };
 
   useEffect(() => {

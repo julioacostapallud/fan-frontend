@@ -1,7 +1,7 @@
 import confetti from 'canvas-confetti';
 
 /** Festejo tipo fuegos artificiales (confetti + bursts). */
-export function launchProfitFireworks(durationMs = 4500) {
+export function launchProfitFireworks(durationMs = 4000) {
   const end = Date.now() + durationMs;
 
   const frame = () => {
