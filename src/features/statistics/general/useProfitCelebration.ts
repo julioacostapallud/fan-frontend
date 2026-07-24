@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { launchProfitFireworks } from './fireworks';
 
 const STORAGE_KEY = 'fan-profit-celebrated-v1';
-/** Iluminación del KPI Resultado neto */
-const SPOTLIGHT_MS = 7000;
 /** Duración de los fuegos artificiales */
 const FIREWORKS_MS = 4000;
 export const REPLAY_CELEBRATE_EVENT = 'fan-replay-profit-celebrate';
@@ -18,18 +16,18 @@ type Options = {
 /**
  * Festejo cuando el resultado neto supera 0.
  * En modo force (preview) dispara siempre al montar.
- * Devuelve `celebrating` para iluminar el KPI de neto.
+ * `burst` marca el pico corto de los fuegos; la iluminación fija va aparte.
  */
 export function useProfitCelebration({ force = false, net }: Options) {
   const fired = useRef(false);
-  const [celebrating, setCelebrating] = useState(false);
+  const [burst, setBurst] = useState(false);
   const clearTimer = useRef<number | null>(null);
 
   const runCelebrate = () => {
     if (clearTimer.current) window.clearTimeout(clearTimer.current);
-    setCelebrating(true);
+    setBurst(true);
     launchProfitFireworks(FIREWORKS_MS);
-    clearTimer.current = window.setTimeout(() => setCelebrating(false), SPOTLIGHT_MS);
+    clearTimer.current = window.setTimeout(() => setBurst(false), FIREWORKS_MS);
   };
 
   useEffect(() => {
@@ -61,7 +59,7 @@ export function useProfitCelebration({ force = false, net }: Options) {
     return () => window.clearTimeout(t);
   }, [force, net]);
 
-  return { celebrating };
+  return { burst };
 }
 
 export function replayProfitCelebration() {
