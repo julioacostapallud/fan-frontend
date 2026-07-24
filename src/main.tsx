@@ -14,6 +14,11 @@ const StatisticsPage = lazy(() =>
     default: m.StatisticsPage,
   })),
 );
+const FestejoPreviewPage = lazy(() =>
+  import('./features/statistics/FestejoPreviewPage').then((m) => ({
+    default: m.FestejoPreviewPage,
+  })),
+);
 const RestockPage = lazy(() =>
   import('./features/statistics/RestockPage').then((m) => ({
     default: m.RestockPage,
@@ -78,6 +83,14 @@ createRoot(document.getElementById('root')!).render(
                 element={
                   <RequireAuth>
                     <StatisticsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/estadisticas/festejo-preview"
+                element={
+                  <RequireAuth>
+                    <FestejoPreviewPage />
                   </RequireAuth>
                 }
               />

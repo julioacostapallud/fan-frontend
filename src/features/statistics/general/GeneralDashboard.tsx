@@ -18,6 +18,7 @@ import { formatMoney } from '../../shared/money';
 import { GENERAL_CHART, generalTooltipStyle } from './chartTheme';
 import { BREAK_EVEN_REVENUE, RENT } from './eventModel';
 import { useGeneralEventModel } from './useGeneralEventModel';
+import { useProfitCelebration } from './useProfitCelebration';
 
 function axisMoney(v: number): string {
   if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
@@ -50,9 +51,14 @@ function moneyTooltipValue(v: unknown): string {
   return formatMoney(Number.isFinite(n) ? n : 0);
 }
 
-export function GeneralDashboard() {
+export function GeneralDashboard({ forceCelebrate = false }: { forceCelebrate?: boolean }) {
   const { model, isLoading, error, refetch } = useGeneralEventModel();
   const [driversTab, setDriversTab] = useState<'products' | 'motifs'>('products');
+
+  useProfitCelebration({
+    force: forceCelebrate,
+    net: model?.kpis.net ?? null,
+  });
 
   if (isLoading) {
     return (
@@ -134,7 +140,7 @@ export function GeneralDashboard() {
           <Kpi
             title="Resultado neto"
             value={formatMoney(kpis.net)}
-            tone={kpis.net >= 0 ? 'ok' : 'bad'}
+            tone={kpis.net > 0 ? 'ok' : 'bad'}
           />
           <Kpi
             title="Proyección al cierre"
@@ -149,7 +155,7 @@ export function GeneralDashboard() {
           <Kpi
             title="Neto proyectado"
             value={formatMoney(kpis.projectedNet)}
-            tone={kpis.projectedNet >= 0 ? 'ok' : 'bad'}
+            tone={kpis.projectedNet > 0 ? 'ok' : 'bad'}
           />
           <Kpi
             title="Equilibrio estimado"
