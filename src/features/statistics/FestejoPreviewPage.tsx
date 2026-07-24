@@ -1,7 +1,7 @@
 import { Button } from 'reactstrap';
 import { AppHeader } from '../shared/AppHeader';
 import { GeneralDashboard } from './general/GeneralDashboard';
-import { launchProfitFireworks } from './general/fireworks';
+import { replayProfitCelebration } from './general/useProfitCelebration';
 
 /**
  * Réplica de Stats → General con datos reales.
@@ -18,14 +18,14 @@ export function FestejoPreviewPage() {
         <Button
           type="button"
           className="btn-top-motifs ms-auto"
-          onClick={() => launchProfitFireworks()}
+          onClick={() => replayProfitCelebration()}
         >
-          🎉 Otra vez
+          Otra vez
         </Button>
       </div>
 
       <div className="festejo-preview-banner">
-        Vista de prueba del festejo · datos reales · fuegos siempre activos
+        Vista de prueba del festejo · datos reales · fuegos + brillo en Resultado neto
       </div>
 
       <div className="stats-tabs mb-3" style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>

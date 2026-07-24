@@ -55,7 +55,7 @@ export function GeneralDashboard({ forceCelebrate = false }: { forceCelebrate?: 
   const { model, isLoading, error, refetch } = useGeneralEventModel();
   const [driversTab, setDriversTab] = useState<'products' | 'motifs'>('products');
 
-  useProfitCelebration({
+  const { celebrating } = useProfitCelebration({
     force: forceCelebrate,
     net: model?.kpis.net ?? null,
   });
@@ -141,6 +141,7 @@ export function GeneralDashboard({ forceCelebrate = false }: { forceCelebrate?: 
             title="Resultado neto"
             value={formatMoney(kpis.net)}
             tone={kpis.net > 0 ? 'ok' : 'bad'}
+            spotlight={celebrating}
           />
           <Kpi
             title="Proyección al cierre"
@@ -514,13 +515,17 @@ function Kpi({
   title,
   value,
   tone,
+  spotlight,
 }: {
   title: string;
   value: string;
   tone?: 'ok' | 'bad' | 'sky' | 'warn';
+  spotlight?: boolean;
 }) {
   return (
-    <div className={`g-kpi${tone ? ` g-kpi-${tone}` : ''}`}>
+    <div
+      className={`g-kpi${tone ? ` g-kpi-${tone}` : ''}${spotlight ? ' g-kpi-spotlight' : ''}`}
+    >
       <div className="g-kpi-title">{title}</div>
       <div className="g-kpi-value">{value}</div>
     </div>
