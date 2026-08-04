@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Button, Nav, NavItem, NavLink, Spinner } from 'reactstrap';
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { api } from '../../api/api';
 import { formatMoney } from '../shared/money';
 import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
@@ -21,12 +22,14 @@ function rangeForTab(tab: Tab): { from?: string; to?: string } {
 }
 
 export function StatisticsPage() {
+  const { eventId = '' } = useParams();
   const [tab, setTab] = useState<Tab>('hoy');
   const [topOpen, setTopOpen] = useState(false);
 
   const daysQuery = useQuery({
-    queryKey: ['stats-days'],
-    queryFn: () => api.statistics.days(),
+    queryKey: ['stats-days', eventId],
+    queryFn: () => api.statistics.days(eventId),
+    enabled: Boolean(eventId),
   });
 
   const closedDays = daysQuery.data?.days ?? [];
@@ -41,9 +44,9 @@ export function StatisticsPage() {
   const range = useMemo(() => rangeForTab(tab), [tab]);
 
   const query = useQuery({
-    queryKey: ['stats-sellers', tab, range.from, range.to],
-    queryFn: () => api.statistics.sellers(range.from, range.to),
-    enabled: tab !== 'general',
+    queryKey: ['stats-sellers', eventId, tab, range.from, range.to],
+    queryFn: () => api.statistics.sellers(eventId, range.from, range.to),
+    enabled: tab !== 'general' && Boolean(eventId),
   });
 
   const error = query.error
@@ -56,7 +59,7 @@ export function StatisticsPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader eventId={eventId} />
 
       <div className="page-header">
         <h1 className="page-title">Stats ventas</h1>
@@ -111,7 +114,7 @@ export function StatisticsPage() {
       </Nav>
 
       {tab === 'general' ? (
-        <GeneralDashboard />
+        <GeneralDashboard eventId={eventId} />
       ) : (
         <>
           {error && (
@@ -155,7 +158,11 @@ export function StatisticsPage() {
         </>
       )}
 
-      <TopMotifsModal isOpen={topOpen} onClose={() => setTopOpen(false)} />
+      <TopMotifsModal
+        eventId={eventId}
+        isOpen={topOpen}
+        onClose={() => setTopOpen(false)}
+      />
     </div>
   );
 }

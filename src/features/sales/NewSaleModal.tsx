@@ -13,7 +13,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/api';
 import { createIdempotencyKey, ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
-import type { DiscountType, Product, SaleDetail } from '../../api/types';
+import type { DiscountType, EventProduct, SaleDetail } from '../../api/types';
 import { calculateLineItem, calculateSale, formatMoney } from '../shared/money';
 import { formatBytes, processImageFile } from '../shared/image';
 import { createSaleSchema } from './sale.schema';
@@ -36,6 +36,7 @@ interface LineDraft {
 
 interface Props {
   isOpen: boolean;
+  eventId: string;
   onClose: () => void;
   onSaved: () => void;
   editingSale?: SaleDetail | null;
@@ -71,9 +72,9 @@ function linesFromSale(sale: SaleDetail): LineDraft[] {
   }));
 }
 
-function lineLabel(item: LineDraft, products: Product[]): string {
-  const product = products.find((p) => p.id === item.productId);
-  const name = product?.name ?? 'Producto';
+function lineLabel(item: LineDraft, products: EventProduct[]): string {
+  const product = products.find((p) => p.productId === item.productId);
+  const name = product?.product.name ?? 'Producto';
   return `${name} · ${item.motifName}`.trim();
 }
 
@@ -90,7 +91,13 @@ function lineAmount(item: LineDraft): string | null {
   }
 }
 
-export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
+export function NewSaleModal({
+  isOpen,
+  eventId,
+  onClose,
+  onSaved,
+  editingSale,
+}: Props) {
   const isEdit = Boolean(editingSale);
   const [items, setItems] = useState<LineDraft[]>([]);
   const [draft, setDraft] = useState<LineDraft>(emptyLine());
@@ -105,13 +112,17 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const productsQuery = useQuery({
-    queryKey: ['products', isEdit ? 'all' : 'active'],
-    queryFn: () => api.products.list({ activeOnly: !isEdit }),
+    queryKey: ['event-products', eventId],
+    queryFn: () => api.events.products.list(eventId),
     staleTime: 60_000,
-    enabled: isOpen,
+    enabled: isOpen && Boolean(eventId),
   });
 
-  const products = productsQuery.data ?? [];
+  const products = useMemo(() => {
+    const list = productsQuery.data ?? [];
+    if (isEdit) return list;
+    return list.filter((p) => p.product.isActive);
+  }, [productsQuery.data, isEdit]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -155,10 +166,10 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
     setDraft((prev) => ({ ...prev, ...patch }));
   }
 
-  function selectProduct(product: Product) {
+  function selectProduct(product: EventProduct) {
     patchDraft({
-      productId: product.id,
-      unitPrice: String(Number(product.defaultPrice)),
+      productId: product.productId,
+      unitPrice: String(Number(product.price)),
     });
   }
 
@@ -301,6 +312,7 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
     setSaving(true);
     try {
       const payload = {
+        eventId,
         items: workingItems.map((i) => ({
           productId: i.productId,
           motifName: i.motifName.trim(),
@@ -365,15 +377,17 @@ export function NewSaleModal({ isOpen, onClose, onSaved, editingSale }: Props) {
                     type="select"
                     value={draft.productId}
                     onChange={(e) => {
-                      const product = products.find((p) => p.id === e.target.value);
+                      const product = products.find(
+                        (p) => p.productId === e.target.value,
+                      );
                       if (product) selectProduct(product);
                       else patchDraft({ productId: '', unitPrice: '' });
                     }}
                   >
                     <option value="">Seleccionar…</option>
                     {products.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
+                      <option key={p.productId} value={p.productId}>
+                        {p.product.name}
                       </option>
                     ))}
                   </Input>

@@ -4,7 +4,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/app.css';
-import { HomePage } from './features/sales/HomePage';
+import { EventsHomePage } from './features/events/EventsHomePage';
+import { NewEventPage } from './features/events/NewEventPage';
+import { EventSalesPage } from './features/events/EventSalesPage';
+import { EventExpensesPage } from './features/events/EventExpensesPage';
 import { AuthProvider } from './features/auth/AuthContext';
 import { RequireAuth } from './features/auth/RequireAuth';
 import { LoginPage } from './features/auth/LoginPage';
@@ -61,7 +64,55 @@ createRoot(document.getElementById('root')!).render(
                 path="/"
                 element={
                   <RequireAuth>
-                    <HomePage />
+                    <EventsHomePage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/eventos/nuevo"
+                element={
+                  <RequireAuth>
+                    <NewEventPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/eventos/:eventId"
+                element={
+                  <RequireAuth>
+                    <EventSalesPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/eventos/:eventId/estadisticas"
+                element={
+                  <RequireAuth>
+                    <StatisticsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/eventos/:eventId/reposicion"
+                element={
+                  <RequireAuth>
+                    <RestockPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/eventos/:eventId/productos"
+                element={
+                  <RequireAuth>
+                    <AdminPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/eventos/:eventId/gastos"
+                element={
+                  <RequireAuth>
+                    <EventExpensesPage />
                   </RequireAuth>
                 }
               />
@@ -70,30 +121,6 @@ createRoot(document.getElementById('root')!).render(
                 element={
                   <RequireAuth>
                     <SaleDetailPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/estadisticas"
-                element={
-                  <RequireAuth>
-                    <StatisticsPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/reposicion"
-                element={
-                  <RequireAuth>
-                    <RestockPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <RequireAuth>
-                    <AdminPage />
                   </RequireAuth>
                 }
               />

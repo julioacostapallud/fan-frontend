@@ -1,16 +1,18 @@
-import { Link } from 'react-router-dom';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useParams } from 'react-router-dom';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Spinner } from 'reactstrap';
 import { useState } from 'react';
 import { api } from '../../api/api';
-import { SaleCard } from './SaleCard';
-import { NewSaleModal } from './NewSaleModal';
+import { SaleCard } from '../sales/SaleCard';
+import { NewSaleModal } from '../sales/NewSaleModal';
 import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { AppHeader } from '../shared/AppHeader';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import type { SaleDetail, SaleListItem } from '../../api/types';
+import { formatIsoDayLabel } from '../shared/dates';
 
-export function HomePage() {
+export function EventSalesPage() {
+  const { eventId = '' } = useParams();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<SaleDetail | null>(null);
   const [deletingSale, setDeletingSale] = useState<SaleListItem | null>(null);
@@ -19,12 +21,20 @@ export function HomePage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const queryClient = useQueryClient();
 
+  const eventQuery = useQuery({
+    queryKey: ['event', eventId],
+    queryFn: () => api.events.get(eventId),
+    enabled: Boolean(eventId),
+  });
+
   const salesQuery = useInfiniteQuery({
-    queryKey: ['sales'],
+    queryKey: ['sales', eventId],
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => api.sales.list({ page: pageParam, limit: 20 }),
+    queryFn: ({ pageParam }) =>
+      api.sales.list({ eventId, page: pageParam, limit: 20 }),
     getNextPageParam: (last) =>
       last.meta.page < last.meta.totalPages ? last.meta.page + 1 : undefined,
+    enabled: Boolean(eventId),
   });
 
   const sales = salesQuery.data?.pages.flatMap((p) => p.data) ?? [];
@@ -56,9 +66,10 @@ export function HomePage() {
     try {
       await api.sales.remove(deletingSale.id);
       setDeletingSale(null);
-      await queryClient.invalidateQueries({ queryKey: ['sales'] });
+      await queryClient.invalidateQueries({ queryKey: ['sales', eventId] });
+      await queryClient.invalidateQueries({ queryKey: ['events'] });
       await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
-      await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
+      await queryClient.invalidateQueries({ queryKey: ['general-event-sales'] });
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : 'No se pudo eliminar la venta',
@@ -68,9 +79,11 @@ export function HomePage() {
     }
   }
 
+  const event = eventQuery.data;
+
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader eventId={eventId} />
 
       <section className="home-hero" aria-label="Acciones">
         <div className="home-hero-brand">
@@ -79,7 +92,12 @@ export function HomePage() {
             alt="Machos Alfa Fan!"
             className="home-hero-mark"
           />
-          <p className="home-hero-event">Bienal del Chaco 2026</p>
+          <p className="home-hero-event">{event?.name ?? 'Evento'}</p>
+          {event && (
+            <p className="home-hero-dates">
+              {formatIsoDayLabel(event.startDate)} — {formatIsoDayLabel(event.endDate)}
+            </p>
+          )}
         </div>
 
         <div className="home-hero-actions">
@@ -93,7 +111,11 @@ export function HomePage() {
           >
             Nueva venta
           </Button>
-          <Button tag={Link} to="/estadisticas" className="btn-touch btn-secondary-fan">
+          <Button
+            tag={Link}
+            to={`/eventos/${eventId}/estadisticas`}
+            className="btn-touch btn-secondary-fan"
+          >
             Stats ventas
           </Button>
         </div>
@@ -167,6 +189,7 @@ export function HomePage() {
 
       <NewSaleModal
         isOpen={modalOpen}
+        eventId={eventId}
         editingSale={editingSale}
         onClose={() => {
           setModalOpen(false);
@@ -177,9 +200,9 @@ export function HomePage() {
           setEditingSale(null);
           setSavedFlash(true);
           window.setTimeout(() => setSavedFlash(false), 1800);
-          await queryClient.invalidateQueries({ queryKey: ['sales'] });
+          await queryClient.invalidateQueries({ queryKey: ['sales', eventId] });
+          await queryClient.invalidateQueries({ queryKey: ['events'] });
           await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
-          await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
           await queryClient.invalidateQueries({ queryKey: ['general-event-sales'] });
         }}
       />

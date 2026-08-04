@@ -1,5 +1,12 @@
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { format, startOfDay, subDays } from 'date-fns';
+import {
+  addDays,
+  eachDayOfInterval,
+  format,
+  parseISO,
+  startOfDay,
+  subDays,
+} from 'date-fns';
 import { BUSINESS_DAY_START_HOUR, BUSINESS_TZ } from './constants';
 
 export function formatSaleDate(iso: string): string {
@@ -37,4 +44,17 @@ export function formatIsoDayLabel(isoDay: string): string {
   const [y, m, d] = isoDay.split('-');
   if (!y || !m || !d) return isoDay;
   return `${d}/${m}/${y}`;
+}
+
+/** Calendar days from `fromIso` through `toIso` inclusive (yyyy-MM-dd). */
+export function eachIsoDay(fromIso: string, toIso: string): string[] {
+  if (fromIso > toIso) return [];
+  return eachDayOfInterval({
+    start: parseISO(fromIso),
+    end: parseISO(toIso),
+  }).map((d) => format(d, 'yyyy-MM-dd'));
+}
+
+export function addIsoDays(isoDay: string, days: number): string {
+  return format(addDays(parseISO(isoDay), days), 'yyyy-MM-dd');
 }

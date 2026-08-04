@@ -1928,3 +1928,134 @@ a {
   margin: 0;
   font-weight: 600;
 }
+
+.home-hero-dates {
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.event-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.event-card:hover,
+.event-card:focus-visible {
+  border-color: rgba(237, 23, 76, 0.45);
+  color: inherit;
+  text-decoration: none;
+}
+
+.event-card.is-current {
+  border-color: rgba(237, 23, 76, 0.65);
+  box-shadow: 0 0 0 1px rgba(237, 23, 76, 0.25), var(--shadow-soft);
+}
+
+.event-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.event-card-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.event-card-badge {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+}
+
+.event-card-dates {
+  margin: 0.35rem 0 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.event-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.event-card-metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.event-metric-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.event-card-metrics strong {
+  font-size: 0.92rem;
+}
+
+.text-ok {
+  color: var(--success);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.event-form {
+  max-width: 420px;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.admin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.admin-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .event-card-metrics {
+    grid-template-columns: 1fr;
+  }
+}

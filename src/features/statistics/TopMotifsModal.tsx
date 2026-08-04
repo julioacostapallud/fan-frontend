@@ -5,6 +5,7 @@ import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 
 type Props = {
+  eventId: string;
   isOpen: boolean;
   onClose: () => void;
 };
@@ -13,11 +14,11 @@ function displayMotif(name: string): string {
   return name === '-' || name.trim() === '' ? 'Sin motivo' : name;
 }
 
-export function TopMotifsModal({ isOpen, onClose }: Props) {
+export function TopMotifsModal({ eventId, isOpen, onClose }: Props) {
   const query = useQuery({
-    queryKey: ['stats-top-motifs'],
-    queryFn: () => api.statistics.topMotifs(10),
-    enabled: isOpen,
+    queryKey: ['stats-top-motifs', eventId],
+    queryFn: () => api.statistics.topMotifs(eventId, 10),
+    enabled: isOpen && Boolean(eventId),
   });
 
   const today = todayIsoDate();

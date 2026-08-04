@@ -10,6 +10,65 @@ export interface Product {
   updatedAt: string;
 }
 
+export interface EventSummary {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+  expensesTotal: string;
+  revenue: string;
+  realProfit: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventDetail {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventExpense {
+  id: string;
+  eventId: string;
+  amount: string;
+  description: string;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventProduct {
+  id: string;
+  eventId: string;
+  productId: string;
+  cost: string;
+  price: string;
+  createdAt: string;
+  updatedAt: string;
+  product: {
+    id: string;
+    name: string;
+    isActive: boolean;
+    defaultPrice: string;
+  };
+}
+
+export interface ImportableProduct {
+  productId: string;
+  productName: string;
+  isActive: boolean;
+  cost: string;
+  price: string;
+  sourceEventId: string;
+  sourceEventName: string;
+}
+
 export interface Motif {
   id: string;
   name: string;
@@ -24,6 +83,7 @@ export interface SaleItemList {
   motifId: string;
   quantity: number;
   unitPrice: string;
+  unitCost?: string;
   lineSubtotal: string;
   discountType: DiscountType;
   discountValue: string;
@@ -36,6 +96,7 @@ export interface SaleItemList {
 
 export interface SaleListItem {
   id: string;
+  eventId?: string;
   createdAt: string;
   updatedAt: string;
   subtotal: string;
@@ -69,6 +130,7 @@ export interface SaleItemDetail extends SaleItemList {
 
 export interface SaleDetail {
   id: string;
+  eventId: string;
   createdAt: string;
   updatedAt: string;
   subtotal: string;
@@ -109,6 +171,8 @@ export interface SellersStats {
 export interface StatsDays {
   days: string[];
   today: string;
+  eventStart?: string;
+  eventEnd?: string;
 }
 
 export interface TopMotifsByDay {
@@ -126,6 +190,8 @@ export interface DailyTotals {
     day: string;
     amount: string;
   }>;
+  eventStart?: string;
+  eventEnd?: string;
 }
 
 export interface RevenueProgress {
@@ -136,6 +202,20 @@ export interface RevenueProgress {
   }>;
 }
 
+export interface EventEconomics {
+  eventStart: string;
+  eventEnd: string;
+  expensesTotal: string;
+  revenue: string;
+  contribution: string;
+  realProfit: string;
+  expenses: Array<{
+    amount: string;
+    description: string;
+    date: string;
+  }>;
+}
+
 export interface RestockItem {
   productName: string;
   motifName: string;
@@ -143,6 +223,7 @@ export interface RestockItem {
 }
 
 export interface CreateSalePayload {
+  eventId: string;
   items: Array<{
     productId: string;
     motifName: string;

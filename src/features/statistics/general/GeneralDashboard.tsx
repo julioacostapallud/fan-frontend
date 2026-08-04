@@ -16,7 +16,6 @@ import { Spinner } from 'reactstrap';
 import { formatIsoDayLabel } from '../../shared/dates';
 import { formatMoney } from '../../shared/money';
 import { GENERAL_CHART, generalTooltipStyle } from './chartTheme';
-import { BREAK_EVEN_REVENUE, RENT } from './eventModel';
 import { useGeneralEventModel } from './useGeneralEventModel';
 import { useProfitCelebration } from './useProfitCelebration';
 
@@ -51,8 +50,8 @@ function moneyTooltipValue(v: unknown): string {
   return formatMoney(Number.isFinite(n) ? n : 0);
 }
 
-export function GeneralDashboard() {
-  const { model, isLoading, error, refetch } = useGeneralEventModel();
+export function GeneralDashboard({ eventId }: { eventId: string }) {
+  const { model, isLoading, error, refetch } = useGeneralEventModel(eventId);
   const [driversTab, setDriversTab] = useState<'products' | 'motifs'>('products');
 
   const { burst } = useProfitCelebration({
@@ -79,7 +78,11 @@ export function GeneralDashboard() {
   }
 
   const { kpis, days, hourly, scenarios, products, motifs } = model;
-  const covered = kpis.gross >= RENT;
+  const rent = kpis.rent;
+  const breakEvenRevenue = rent > 0 && kpis.gross > 0
+    ? rent / (kpis.gross / Math.max(kpis.revenue, 1))
+    : rent / 0.6;
+  const covered = kpis.gross >= rent;
 
   const dayTicks = hourly.filter((h) => h.hourSlot === 0).map((h) => h.id);
 
@@ -96,8 +99,8 @@ export function GeneralDashboard() {
       id: 'start',
       label: 'Inicio',
       tickLabel: '',
-      real: -RENT,
-      projected: -RENT,
+      real: -rent,
+      projected: -rent,
     },
     ...hourly.map((h) => ({
       id: h.id,
@@ -124,8 +127,8 @@ export function GeneralDashboard() {
   return (
     <div className="general-dash">
       <p className="general-lead">
-        Evento 18/07 → 26/07 · Día comercial 06:00–06:00 · Margen 60% · Alquiler{' '}
-        {formatMoney(RENT)}
+        Día comercial 06:00–06:00 · Ganancia real = contribución − gastos · Gastos{' '}
+        {formatMoney(rent)}
       </p>
 
       <div className="general-kpis">
@@ -198,7 +201,7 @@ export function GeneralDashboard() {
                 width={48}
               />
               <ReferenceLine
-                y={BREAK_EVEN_REVENUE}
+                y={breakEvenRevenue}
                 stroke={GENERAL_CHART.breakEven}
                 strokeDasharray="6 4"
                 label={{
@@ -389,7 +392,7 @@ export function GeneralDashboard() {
                 {kpis.breakEvenHourLabel ? ` · ${kpis.breakEvenHourLabel}` : ''}
               </p>
             ) : null}
-            <p className="be-meta">Meta de facturación {formatMoney(BREAK_EVEN_REVENUE)}</p>
+            <p className="be-meta">Meta de facturación {formatMoney(breakEvenRevenue)}</p>
           </div>
         </div>
       </section>

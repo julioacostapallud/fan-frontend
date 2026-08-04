@@ -2,16 +2,29 @@ import {
   BUSINESS_DAY_MINUTES,
   BUSINESS_DAY_START_HOUR,
   BUSINESS_TZ,
-  EVENT_BUSINESS_DAYS,
-  EVENT_ECONOMICS,
 } from '../../shared/constants';
 import { toBusinessDayIso, todayIsoDate } from '../../shared/dates';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { SaleListItem } from '../../../api/types';
 
-export const RENT = EVENT_ECONOMICS.rentAmount;
-export const MARGIN = EVENT_ECONOMICS.grossMarginRate;
-export const BREAK_EVEN_REVENUE = RENT / MARGIN;
+export interface EventModelOptions {
+  businessDays: string[];
+  expensesTotal: number;
+  /** contribución / recaudación; default 0.6 */
+  marginRate?: number;
+  /** contribución real actual Σ qty*(precio−costo) */
+  contributionNow?: number;
+}
+
+function makeEconomics(expensesTotal: number, marginRate: number) {
+  const rent = expensesTotal;
+  const margin = marginRate;
+  const breakEvenRevenue = margin > 0 ? rent / margin : Number.POSITIVE_INFINITY;
+  const grossOf = (revenue: number) => revenue * margin;
+  const netOf = (revenue: number) => grossOf(revenue) - rent;
+  return { rent, margin, breakEvenRevenue, grossOf, netOf };
+}
+
 export const HOURS_PER_BUSINESS_DAY = 24;
 
 function wallToUtc(isoDay: string, hour: number, minute = 0): Date {
@@ -21,14 +34,6 @@ function wallToUtc(isoDay: string, hour: number, minute = 0): Date {
 
 export function businessDayStartUtc(isoDay: string): Date {
   return wallToUtc(isoDay, BUSINESS_DAY_START_HOUR);
-}
-
-export function grossOf(revenue: number): number {
-  return revenue * MARGIN;
-}
-
-export function netOf(revenue: number): number {
-  return grossOf(revenue) - RENT;
 }
 
 /** Slot 0 = 06:00–07:00 AR … slot 23 = 05:00–06:00 AR del día calendario siguiente. */
@@ -184,11 +189,12 @@ export function buildHourlyProfile(
 }
 
 function projectRemainingDaily(
+  businessDays: string[],
   dailyReal: Map<string, number>,
   today: string,
   todayProgress: number,
 ): Map<string, number> {
-  const completed = EVENT_BUSINESS_DAYS.filter((d) => d < today);
+  const completed = businessDays.filter((d) => d < today);
   const completedRevs = completed.map((d) => dailyReal.get(d) ?? 0);
   const positive = completedRevs.filter((v) => v > 0);
   const overall = avg(positive.length ? positive : completedRevs);
@@ -199,7 +205,7 @@ function projectRemainingDaily(
   const out = new Map<string, number>();
   const todayReal = dailyReal.get(today) ?? 0;
 
-  for (const d of EVENT_BUSINESS_DAYS) {
+  for (const d of businessDays) {
     if (d < today) {
       out.set(d, dailyReal.get(d) ?? 0);
     } else if (d === today) {
@@ -208,7 +214,6 @@ function projectRemainingDaily(
       } else {
         const pace = todayReal / todayProgress;
         const blended = pace * 0.55 + baseline * 0.45;
-        // Evita explosiones cuando el ritmo matutino no representa el día.
         const capped = Math.min(blended, Math.max(baseline * 1.35, todayReal));
         out.set(d, Math.max(todayReal, capped));
       }
@@ -255,7 +260,6 @@ function projectedHourlyForDay(
     return out;
   }
 
-  // today
   let realSoFar = 0;
   for (let slot = 0; slot <= currentSlot; slot += 1) {
     const actual = hourlyReal.get(hourKey(day, slot)) ?? 0;
@@ -285,25 +289,26 @@ function projectedHourlyForDay(
     }
   }
 
-  // Sanity: dayReal should match realSoFar for completed slots
   void dayReal;
   return out;
 }
 
 function buildHourlySeries(
+  businessDays: string[],
   hourlyReal: Map<string, number>,
   projectedDaily: Map<string, number>,
   dailyReal: Map<string, number>,
   weights: number[],
   today: string,
   now: Date,
+  netOf: (revenue: number) => number,
 ): HourPoint[] {
   const currentSlot = businessHourSlot(now);
   const points: HourPoint[] = [];
   let cumReal = 0;
   let cumProj = 0;
 
-  for (const day of EVENT_BUSINESS_DAYS) {
+  for (const day of businessDays) {
     const kind: HourPoint['kind'] =
       day < today ? 'past' : day === today ? 'today' : 'future';
     const dayCloseProj = projectedDaily.get(day) ?? dailyReal.get(day) ?? 0;
@@ -322,7 +327,6 @@ function buildHourlySeries(
       const actual = hourlyReal.get(hourKey(day, slot)) ?? 0;
       const isRealHour =
         kind === 'past' || (kind === 'today' && slot <= currentSlot);
-      /** Proyectada solo desde “ahora” en adelante (no duplicar el pasado). */
       const isProjectedHour =
         kind === 'future' || (kind === 'today' && slot >= currentSlot);
 
@@ -354,8 +358,9 @@ function buildHourlySeries(
 
 function findBreakEven(
   cumulativeByDay: { day: string; cum: number }[],
+  breakEvenRevenue: number,
 ): { day: string; hourLabel: string } | null {
-  const need = BREAK_EVEN_REVENUE;
+  const need = breakEvenRevenue;
   let prev = 0;
   for (const row of cumulativeByDay) {
     if (row.cum >= need) {
@@ -376,13 +381,12 @@ function findBreakEven(
   return null;
 }
 
-/** Equilibrio más preciso sobre la serie horaria proyectada (incluye huecos null). */
 function findBreakEvenHourly(
   hourly: HourPoint[],
+  breakEvenRevenue: number,
 ): { day: string; hourLabel: string } | null {
-  const need = BREAK_EVEN_REVENUE;
   for (const p of hourly) {
-    if (p.cumulativeProjected != null && p.cumulativeProjected >= need) {
+    if (p.cumulativeProjected != null && p.cumulativeProjected >= breakEvenRevenue) {
       return {
         day: p.day,
         hourLabel: `${String(p.wallHour).padStart(2, '0')}:00`,
@@ -392,7 +396,10 @@ function findBreakEvenHourly(
   return null;
 }
 
-function rankMap(map: Map<string, { units: number; revenue: number }>): RankItem[] {
+function rankMap(
+  map: Map<string, { units: number; revenue: number }>,
+  grossOf: (revenue: number) => number,
+): RankItem[] {
   const total = [...map.values()].reduce((s, v) => s + v.revenue, 0) || 1;
   return [...map.entries()]
     .map(([name, v]) => ({
@@ -407,14 +414,16 @@ function rankMap(map: Map<string, { units: number; revenue: number }>): RankItem
 }
 
 function scenarioBreakEvenDay(
+  businessDays: string[],
   dailyReal: Map<string, number>,
   projectedDaily: Map<string, number>,
   today: string,
   factor: number,
+  breakEvenRevenue: number,
 ): string | null {
   let c = 0;
   const series: { day: string; cum: number }[] = [];
-  for (const d of EVENT_BUSINESS_DAYS) {
+  for (const d of businessDays) {
     let add: number;
     if (d < today) add = dailyReal.get(d) ?? 0;
     else if (d === today) {
@@ -425,15 +434,24 @@ function scenarioBreakEvenDay(
     c += add;
     series.push({ day: d, cum: c });
   }
-  return findBreakEven(series)?.day ?? null;
+  return findBreakEven(series, breakEvenRevenue)?.day ?? null;
 }
 
-export function buildEventModel(sales: SaleListItem[], now = new Date()): EventModel {
+export function buildEventModel(
+  sales: SaleListItem[],
+  options: EventModelOptions,
+  now = new Date(),
+): EventModel {
+  const businessDays = options.businessDays;
+  const { rent, breakEvenRevenue, grossOf, netOf } = makeEconomics(
+    options.expensesTotal,
+    options.marginRate ?? 0.6,
+  );
   const today = todayIsoDate(now);
 
   const dailyReal = new Map<string, number>();
   const hourlyReal = new Map<string, number>();
-  for (const d of EVENT_BUSINESS_DAYS) dailyReal.set(d, 0);
+  for (const d of businessDays) dailyReal.set(d, 0);
 
   const products = new Map<string, { units: number; revenue: number }>();
   const motifs = new Map<string, { units: number; revenue: number }>();
@@ -464,17 +482,21 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
     }
   }
 
-  const completedDays = EVENT_BUSINESS_DAYS.filter((d) => d < today) as string[];
+  const completedDays = businessDays.filter((d) => d < today);
   const weights = buildHourlyProfile(hourlyReal, dailyReal, completedDays);
-  // Cierre de “hoy”: progreso por reloj (no por perfil), para no inflar la tarde.
   const progress = dayProgress(today, now);
-  const projectedDaily = projectRemainingDaily(dailyReal, today, progress);
+  const projectedDaily = projectRemainingDaily(
+    businessDays,
+    dailyReal,
+    today,
+    progress,
+  );
 
   let cumReal = 0;
   let cumProj = 0;
   const days: DayPoint[] = [];
 
-  for (const d of EVENT_BUSINESS_DAYS) {
+  for (const d of businessDays) {
     const real = dailyReal.get(d) ?? 0;
     const projClose = projectedDaily.get(d) ?? real;
     const kind: DayPoint['kind'] =
@@ -497,12 +519,14 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
   }
 
   const hourly = buildHourlySeries(
+    businessDays,
     hourlyReal,
     projectedDaily,
     dailyReal,
     weights,
     today,
     now,
+    netOf,
   );
 
   const revenueNow =
@@ -511,13 +535,14 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
     0;
 
   const projectedRevenue = days[days.length - 1]?.cumulativeProjected ?? revenueNow;
-  const gross = grossOf(revenueNow);
-  const net = netOf(revenueNow);
-  const coveragePct = Math.min(100, (gross / RENT) * 100);
+  const gross =
+    options.contributionNow != null ? options.contributionNow : grossOf(revenueNow);
+  const net = gross - rent;
+  const coveragePct = rent > 0 ? Math.min(100, (gross / rent) * 100) : 100;
 
   let beFromReal: { day: string; hourLabel: string } | null = null;
   for (const p of hourly) {
-    if (p.cumulativeReal != null && p.cumulativeReal >= BREAK_EVEN_REVENUE) {
+    if (p.cumulativeReal != null && p.cumulativeReal >= breakEvenRevenue) {
       beFromReal = {
         day: p.day,
         hourLabel: `${String(p.wallHour).padStart(2, '0')}:00`,
@@ -525,7 +550,7 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
       break;
     }
   }
-  const beFromProj = findBreakEvenHourly(hourly);
+  const beFromProj = findBreakEvenHourly(hourly, breakEvenRevenue);
   const breakEven = beFromReal ?? beFromProj;
 
   const scenarios: Scenario[] = [
@@ -535,7 +560,14 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
       revenue: projectedRevenue * 0.88,
       gross: grossOf(projectedRevenue * 0.88),
       net: netOf(projectedRevenue * 0.88),
-      breakEvenDay: scenarioBreakEvenDay(dailyReal, projectedDaily, today, 0.88),
+      breakEvenDay: scenarioBreakEvenDay(
+        businessDays,
+        dailyReal,
+        projectedDaily,
+        today,
+        0.88,
+        breakEvenRevenue,
+      ),
     },
     {
       key: 'probable',
@@ -543,7 +575,14 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
       revenue: projectedRevenue,
       gross: grossOf(projectedRevenue),
       net: netOf(projectedRevenue),
-      breakEvenDay: scenarioBreakEvenDay(dailyReal, projectedDaily, today, 1),
+      breakEvenDay: scenarioBreakEvenDay(
+        businessDays,
+        dailyReal,
+        projectedDaily,
+        today,
+        1,
+        breakEvenRevenue,
+      ),
     },
     {
       key: 'optimistic',
@@ -551,7 +590,14 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
       revenue: projectedRevenue * 1.14,
       gross: grossOf(projectedRevenue * 1.14),
       net: netOf(projectedRevenue * 1.14),
-      breakEvenDay: scenarioBreakEvenDay(dailyReal, projectedDaily, today, 1.14),
+      breakEvenDay: scenarioBreakEvenDay(
+        businessDays,
+        dailyReal,
+        projectedDaily,
+        today,
+        1.14,
+        breakEvenRevenue,
+      ),
     },
   ];
 
@@ -563,19 +609,19 @@ export function buildEventModel(sales: SaleListItem[], now = new Date()): EventM
       revenue: revenueNow,
       gross,
       net,
-      rent: RENT,
+      rent,
       coveragePct,
       projectedRevenue,
       projectedNet: netOf(projectedRevenue),
       breakEvenDay: breakEven?.day ?? null,
       breakEvenHourLabel: breakEven?.hourLabel ?? null,
-      revenueToBreakEven: Math.max(0, BREAK_EVEN_REVENUE - revenueNow),
-      grossToBreakEven: Math.max(0, RENT - gross),
+      revenueToBreakEven: Math.max(0, breakEvenRevenue - revenueNow),
+      grossToBreakEven: Math.max(0, rent - gross),
     },
     scenarios,
-    products: rankMap(products),
-    motifs: rankMap(motifs),
+    products: rankMap(products, grossOf),
+    motifs: rankMap(motifs, grossOf),
   };
 }
 
-export { EVENT_BUSINESS_DAYS, toBusinessDayIso };
+export { toBusinessDayIso };

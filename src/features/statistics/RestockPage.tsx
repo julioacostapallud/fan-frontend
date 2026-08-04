@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'react-router-dom';
 import { Spinner, Table } from 'reactstrap';
 import { api } from '../../api/api';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import { AppHeader } from '../shared/AppHeader';
 
 export function RestockPage() {
+  const { eventId = '' } = useParams();
   const query = useQuery({
-    queryKey: ['stats-restock'],
-    queryFn: () => api.statistics.restock(),
+    queryKey: ['stats-restock', eventId],
+    queryFn: () => api.statistics.restock(eventId),
+    enabled: Boolean(eventId),
   });
 
   const error = query.error
@@ -20,7 +23,7 @@ export function RestockPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader eventId={eventId} />
 
       <h1 className="page-title">Reposición</h1>
       <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
@@ -60,7 +63,11 @@ export function RestockPage() {
               {query.data.map((row) => (
                 <tr key={`${row.productName}-${row.motifName}`}>
                   <td>{row.productName}</td>
-                  <td>{row.motifName === '-' || !row.motifName.trim() ? 'Sin motivo' : row.motifName}</td>
+                  <td>
+                    {row.motifName === '-' || !row.motifName.trim()
+                      ? 'Sin motivo'
+                      : row.motifName}
+                  </td>
                   <td className="text-end">{row.units}</td>
                 </tr>
               ))}

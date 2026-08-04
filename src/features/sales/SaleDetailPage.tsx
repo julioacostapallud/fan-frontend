@@ -74,7 +74,7 @@ export function SaleDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['sales'] });
       await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
       await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
-      navigate('/');
+      navigate(sale.eventId ? `/eventos/${sale.eventId}` : '/');
     } catch (err) {
       setDeleting(false);
       alert(err instanceof Error ? err.message : 'No se pudo eliminar');
@@ -84,7 +84,7 @@ export function SaleDetailPage() {
   return (
     <div className="app-shell">
       <div className="page-header">
-        <Button tag={Link} to="/" color="link" className="p-0">
+        <Button tag={Link} to={`/eventos/${sale.eventId}`} color="link" className="p-0">
           ←
         </Button>
         <h1>Venta</h1>
@@ -162,6 +162,7 @@ export function SaleDetailPage() {
 
       <NewSaleModal
         isOpen={editOpen}
+        eventId={sale.eventId}
         editingSale={sale}
         onClose={() => setEditOpen(false)}
         onSaved={async () => {

@@ -1,17 +1,24 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
-export function AppHeader() {
+interface Props {
+  eventId?: string;
+}
+
+export function AppHeader({ eventId }: Props) {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  function navClass(path: string) {
-    const active =
-      path === '/'
-        ? location.pathname === '/'
-        : location.pathname.startsWith(path);
-    return active ? 'app-nav-link is-active' : 'app-nav-link';
+  function isActive(path: string, exact = false) {
+    if (exact) return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   }
+
+  function navClass(path: string, exact = false) {
+    return isActive(path, exact) ? 'app-nav-link is-active' : 'app-nav-link';
+  }
+
+  const base = eventId ? `/eventos/${eventId}` : null;
 
   return (
     <header className="app-header">
@@ -39,15 +46,37 @@ export function AppHeader() {
 
       <nav className="app-nav" aria-label="Principal">
         <div className="app-nav-scroll">
-          <Link to="/estadisticas" className={navClass('/estadisticas')}>
-            Ventas
+          <Link to="/" className={navClass('/', true)}>
+            Eventos
           </Link>
-          <Link to="/reposicion" className={navClass('/reposicion')}>
-            Reposición
-          </Link>
-          <Link to="/admin" className={navClass('/admin')}>
-            Productos
-          </Link>
+          {base && (
+            <>
+              <Link to={base} className={navClass(base, true)}>
+                Ventas
+              </Link>
+              <Link
+                to={`${base}/estadisticas`}
+                className={navClass(`${base}/estadisticas`)}
+              >
+                Stats
+              </Link>
+              <Link
+                to={`${base}/reposicion`}
+                className={navClass(`${base}/reposicion`)}
+              >
+                Reposición
+              </Link>
+              <Link
+                to={`${base}/productos`}
+                className={navClass(`${base}/productos`)}
+              >
+                Productos
+              </Link>
+              <Link to={`${base}/gastos`} className={navClass(`${base}/gastos`)}>
+                Gastos
+              </Link>
+            </>
+          )}
         </div>
       </nav>
     </header>
