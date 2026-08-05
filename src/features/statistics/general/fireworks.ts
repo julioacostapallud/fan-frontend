@@ -10,7 +10,7 @@ export function launchProfitFireworks(durationMs = 4000) {
       angle: 60,
       spread: 55,
       origin: { x: 0, y: 0.7 },
-      colors: ['#e11d48', '#f59e0b', '#34d399', '#38bdf8', '#f472b6', '#fbbf24'],
+      colors: ['#B83A52', '#3D7A8A', '#2A9B7A', '#A67C52', '#8B949E'],
       zIndex: 4000,
     });
     confetti({
@@ -18,7 +18,7 @@ export function launchProfitFireworks(durationMs = 4000) {
       angle: 120,
       spread: 55,
       origin: { x: 1, y: 0.7 },
-      colors: ['#e11d48', '#f59e0b', '#34d399', '#38bdf8', '#f472b6', '#fbbf24'],
+      colors: ['#B83A52', '#3D7A8A', '#2A9B7A', '#A67C52', '#8B949E'],
       zIndex: 4000,
     });
 
@@ -33,7 +33,7 @@ export function launchProfitFireworks(durationMs = 4000) {
     spread: 100,
     startVelocity: 45,
     origin: { x: 0.5, y: 0.55 },
-    colors: ['#e11d48', '#fb7185', '#f59e0b', '#34d399', '#38bdf8'],
+    colors: ['#B83A52', '#3D7A8A', '#2A9B7A', '#A67C52', '#8B949E'],
     zIndex: 4000,
   });
   setTimeout(() => {

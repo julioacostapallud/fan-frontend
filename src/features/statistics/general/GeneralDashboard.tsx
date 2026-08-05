@@ -192,12 +192,16 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                   cumData.find((p) => p.id === id)?.tickLabel ?? ''
                 }
                 tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
                 interval={0}
                 minTickGap={12}
               />
               <YAxis
                 tickFormatter={axisMoney}
-                tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }}
+                tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
                 width={48}
               />
               <ReferenceLine
@@ -221,7 +225,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                   seriesTooltipLabel(name, item, 'Proyectada'),
                 ]}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
+              <Legend wrapperStyle={{ fontSize: 11, color: GENERAL_CHART.muted }} iconSize={8} iconType="circle" />
               <Line
                 type="monotone"
                 dataKey="real"
@@ -266,12 +270,16 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                     : netData.find((p) => p.id === id)?.tickLabel ?? ''
                 }
                 tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
                 interval={0}
                 minTickGap={12}
               />
               <YAxis
                 tickFormatter={axisMoney}
-                tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }}
+                tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
                 width={52}
               />
               <ReferenceLine y={0} stroke={GENERAL_CHART.breakEven} strokeWidth={2} />
@@ -285,7 +293,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                   seriesTooltipLabel(name, item, 'Proyectado'),
                 ]}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
+              <Legend wrapperStyle={{ fontSize: 11, color: GENERAL_CHART.muted }} iconSize={8} iconType="circle" />
               <Line
                 type="monotone"
                 dataKey="real"
@@ -321,8 +329,8 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={dailyBars} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid stroke={GENERAL_CHART.grid} vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }} />
-              <YAxis tickFormatter={axisMoney} tick={{ fill: GENERAL_CHART.axis, fontSize: 12 }} width={48} />
+              <XAxis dataKey="label" tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }} tickLine={false} axisLine={false} />
+              <YAxis tickFormatter={axisMoney} tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }} tickLine={false} axisLine={false} width={48} />
               <Tooltip
                 contentStyle={generalTooltipStyle}
                 formatter={(v, name) => {
@@ -335,10 +343,10 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                   return [moneyTooltipValue(v), labels[key] ?? key];
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
-              <Bar dataKey="real" name="Real" stackId="a" fill={GENERAL_CHART.real} radius={[0, 0, 0, 0]} maxBarSize={40} />
-              <Bar dataKey="todayExtra" name="Resto del día" stackId="a" fill={GENERAL_CHART.today} maxBarSize={40} />
-              <Bar dataKey="projected" name="Proyectado" stackId="a" fill={GENERAL_CHART.future} radius={[6, 6, 0, 0]} maxBarSize={40} />
+              <Legend wrapperStyle={{ fontSize: 11, color: GENERAL_CHART.muted }} iconSize={8} iconType="circle" />
+              <Bar dataKey="real" name="Real" stackId="a" fill={GENERAL_CHART.real} maxBarSize={36} />
+              <Bar dataKey="todayExtra" name="Resto del día" stackId="a" fill={GENERAL_CHART.today} maxBarSize={36} />
+              <Bar dataKey="projected" name="Proyectado" stackId="a" fill={GENERAL_CHART.future} radius={[8, 8, 0, 0]} maxBarSize={36} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -355,7 +363,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
             <div
               className="be-ring"
               style={{
-                background: `conic-gradient(${GENERAL_CHART.breakEven} ${kpis.coveragePct}%, rgba(255,255,255,0.08) 0)`,
+                background: `conic-gradient(${GENERAL_CHART.breakEven} ${kpis.coveragePct}%, rgba(26, 31, 36, 0.08) 0)`,
               }}
             >
               <div className="be-ring-inner">
