@@ -4,6 +4,7 @@ import {
   BUSINESS_TZ,
 } from '../../shared/constants';
 import { toBusinessDayIso, todayIsoDate } from '../../shared/dates';
+import { isUnrankedMotif } from '../../shared/motif';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { SaleListItem } from '../../../api/types';
 
@@ -475,10 +476,12 @@ export function buildEventModel(
       p.units += qty;
       p.revenue += line;
       products.set(pName, p);
-      const m = motifs.get(mName) ?? { units: 0, revenue: 0 };
-      m.units += qty;
-      m.revenue += line;
-      motifs.set(mName, m);
+      if (!isUnrankedMotif(mName)) {
+        const m = motifs.get(mName) ?? { units: 0, revenue: 0 };
+        m.units += qty;
+        m.revenue += line;
+        motifs.set(mName, m);
+      }
     }
   }
 

@@ -2928,40 +2928,31 @@ a {
 }
 
 /* —— Theme toggle —— */
-.theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-}
-
 .theme-toggle-btn {
   appearance: none;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  width: 36px;
-  height: 36px;
-  border-radius: calc(var(--radius-sm) - 4px);
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background var(--motion), color var(--motion);
+  transition: background var(--motion), color var(--motion), transform var(--motion);
 }
 
 .theme-toggle-btn:hover,
 .theme-toggle-btn:focus-visible {
   color: var(--text-primary);
+  background: var(--surface-1);
   outline: none;
 }
 
-.theme-toggle-btn.is-active {
-  background: var(--surface-1);
-  color: var(--text-primary);
-  box-shadow: inset 0 0 0 1px var(--border-medium);
+.theme-toggle-btn:active {
+  transform: scale(0.96);
 }
 
 /* —— Dark theme —— */

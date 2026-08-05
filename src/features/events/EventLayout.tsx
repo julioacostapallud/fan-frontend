@@ -59,8 +59,8 @@ export function EventLayout() {
           </Link>
 
           <div className="app-header-user">
-            <span className="app-header-username">{user?.displayName}</span>
             <ThemeToggle />
+            <span className="app-header-username">{user?.displayName}</span>
             <button type="button" className="btn-ghost btn-logout" onClick={logout}>
               Salir
             </button>

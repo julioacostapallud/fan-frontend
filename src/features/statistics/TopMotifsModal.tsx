@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Modal, ModalBody, ModalHeader, Spinner } from 'reactstrap';
 import { api } from '../../api/api';
 import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
+import { isUnrankedMotif } from '../shared/motif';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 
 type Props = {
@@ -10,14 +11,10 @@ type Props = {
   onClose: () => void;
 };
 
-function displayMotif(name: string): string {
-  return name === '-' || name.trim() === '' ? 'Sin motivo' : name;
-}
-
 export function TopMotifsModal({ eventId, isOpen, onClose }: Props) {
   const query = useQuery({
     queryKey: ['stats-top-motifs', eventId],
-    queryFn: () => api.statistics.topMotifs(eventId, 10),
+    queryFn: () => api.statistics.topMotifs(eventId, 12),
     enabled: isOpen && Boolean(eventId),
   });
 
@@ -29,6 +26,13 @@ export function TopMotifsModal({ eventId, isOpen, onClose }: Props) {
       ? query.error.message
       : 'No se pudo cargar el top'
     : null;
+
+  const days = query.data?.days.map((block) => ({
+    ...block,
+    motifs: block.motifs
+      .filter((m) => !isUnrankedMotif(m.motifName))
+      .slice(0, 10),
+  }));
 
   return (
     <Modal
@@ -58,24 +62,28 @@ export function TopMotifsModal({ eventId, isOpen, onClose }: Props) {
           </div>
         )}
 
-        {query.data && query.data.days.length === 0 && (
+        {days && days.length === 0 && (
           <p className="text-muted mb-0">Todavía no hay ventas.</p>
         )}
 
-        {query.data?.days.map((block) => (
+        {days?.map((block) => (
           <section key={block.day} className="top-day-block">
             <h2 className="top-day-title">
               {block.day === today ? 'Hoy' : `Día ${formatIsoDayLabel(block.day)}`}
             </h2>
-            <ol className="top-motif-list">
-              {block.motifs.map((m, i) => (
-                <li key={`${block.day}-${m.motifName}`}>
-                  <span className="top-rank">{i + 1}</span>
-                  <span className="top-name">{displayMotif(m.motifName)}</span>
-                  <span className="top-units">{m.units}</span>
-                </li>
-              ))}
-            </ol>
+            {block.motifs.length === 0 ? (
+              <p className="text-muted mb-0">Sin motivos rankeables.</p>
+            ) : (
+              <ol className="top-motif-list">
+                {block.motifs.map((m, i) => (
+                  <li key={`${block.day}-${m.motifName}`}>
+                    <span className="top-rank">{i + 1}</span>
+                    <span className="top-name">{m.motifName}</span>
+                    <span className="top-units">{m.units}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
           </section>
         ))}
       </ModalBody>

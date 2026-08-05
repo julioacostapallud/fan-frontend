@@ -26,10 +26,6 @@ function axisMoney(v: number): string {
   return String(Math.round(v));
 }
 
-function displayMotif(name: string): string {
-  return name === '-' || name.trim() === '' ? 'Sin motivo' : name;
-}
-
 /** Recharts pasa el `name` de la serie (leyenda), no siempre el dataKey. */
 function seriesTooltipLabel(
   name: unknown,
@@ -506,7 +502,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                 <span className="drivers-rank">{i + 1}</span>
                 <div className="drivers-body">
                   <div className="drivers-line">
-                    <strong>{displayMotif(m.name)}</strong>
+                    <strong>{m.name}</strong>
                     <span className="drivers-amount">{formatMoney(m.revenue)}</span>
                   </div>
                   <div className="drivers-meta">
