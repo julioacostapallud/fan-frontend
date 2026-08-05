@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#EEF1F4" />
-    <title>Fan! Bienal 2026</title>
+    <title>Fan!</title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('fan-theme');
+          if (t === 'dark' || t === 'light') {
+            document.documentElement.setAttribute('data-theme', t);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', t === 'dark' ? '#0E1114' : '#EEF1F4');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

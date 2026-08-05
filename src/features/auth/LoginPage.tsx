@@ -51,12 +51,6 @@ export function LoginPage() {
           alt="Machos Alfa Fan!"
           className="login-submark"
         />
-        <div className="brand-lockup login-wordmark">
-          <div className="brand-name">
-            Fan<span>!</span>
-          </div>
-          <div className="brand-edition">Bienal 2026</div>
-        </div>
       </div>
 
       <form className="login-card" onSubmit={onSubmit}>

@@ -12,6 +12,7 @@ import { EventExpensesPage } from './features/events/EventExpensesPage';
 import { AuthProvider } from './features/auth/AuthContext';
 import { RequireAuth } from './features/auth/RequireAuth';
 import { LoginPage } from './features/auth/LoginPage';
+import { ThemeProvider } from './features/shared/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api/api';
 import { Spinner } from 'reactstrap';
@@ -19,11 +20,6 @@ import { Spinner } from 'reactstrap';
 const StatisticsPage = lazy(() =>
   import('./features/statistics/StatisticsPage').then((m) => ({
     default: m.StatisticsPage,
-  })),
-);
-const RestockPage = lazy(() =>
-  import('./features/statistics/RestockPage').then((m) => ({
-    default: m.RestockPage,
   })),
 );
 const AdminPage = lazy(() =>
@@ -85,54 +81,55 @@ function LegacySaleRedirect() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route
-                path="/"
-                element={
-                  <RequireAuth>
-                    <EventsHomePage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/eventos/nuevo"
-                element={
-                  <RequireAuth>
-                    <NewEventPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/eventos/:eventId"
-                element={
-                  <RequireAuth>
-                    <EventLayout />
-                  </RequireAuth>
-                }
-              >
-                <Route index element={<EventSalesPage />} />
-                <Route path="estadisticas" element={<StatisticsPage />} />
-                <Route path="reposicion" element={<RestockPage />} />
-                <Route path="productos" element={<AdminPage />} />
-                <Route path="gastos" element={<EventExpensesPage />} />
-                <Route path="ventas/:saleId" element={<SaleDetailPage />} />
-              </Route>
-              <Route
-                path="/ventas/:id"
-                element={
-                  <RequireAuth>
-                    <LegacySaleRedirect />
-                  </RequireAuth>
-                }
-              />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/"
+                  element={
+                    <RequireAuth>
+                      <EventsHomePage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/eventos/nuevo"
+                  element={
+                    <RequireAuth>
+                      <NewEventPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/eventos/:eventId"
+                  element={
+                    <RequireAuth>
+                      <EventLayout />
+                    </RequireAuth>
+                  }
+                >
+                  <Route index element={<EventSalesPage />} />
+                  <Route path="estadisticas" element={<StatisticsPage />} />
+                  <Route path="productos" element={<AdminPage />} />
+                  <Route path="gastos" element={<EventExpensesPage />} />
+                  <Route path="ventas/:saleId" element={<SaleDetailPage />} />
+                </Route>
+                <Route
+                  path="/ventas/:id"
+                  element={
+                    <RequireAuth>
+                      <LegacySaleRedirect />
+                    </RequireAuth>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

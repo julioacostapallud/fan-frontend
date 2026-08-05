@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { ThemeToggle } from './ThemeToggle';
 
 /** Chrome del lobby (lista / crear evento). Sin tabs operativos. */
 export function LobbyHeader() {
@@ -23,6 +24,7 @@ export function LobbyHeader() {
 
         <div className="app-header-user">
           <span className="app-header-username">{user?.displayName}</span>
+          <ThemeToggle />
           <button type="button" className="btn-ghost btn-logout" onClick={logout}>
             Salir
           </button>

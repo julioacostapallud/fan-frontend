@@ -4,6 +4,7 @@ import { Spinner } from 'reactstrap';
 import { api } from '../../api/api';
 import { useAuth } from '../auth/AuthContext';
 import { formatIsoDayLabel } from '../shared/dates';
+import { ThemeToggle } from '../shared/ThemeToggle';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 
 function navClass(active: boolean) {
@@ -37,7 +38,6 @@ export function EventLayout() {
   const onVentas =
     path === base || path.startsWith(`${base}/ventas/`);
   const onStats = path.startsWith(`${base}/estadisticas`);
-  const onRestock = path.startsWith(`${base}/reposicion`);
   const onProducts = path.startsWith(`${base}/productos`);
   const onExpenses = path.startsWith(`${base}/gastos`);
 
@@ -60,6 +60,7 @@ export function EventLayout() {
 
           <div className="app-header-user">
             <span className="app-header-username">{user?.displayName}</span>
+            <ThemeToggle />
             <button type="button" className="btn-ghost btn-logout" onClick={logout}>
               Salir
             </button>
@@ -95,9 +96,6 @@ export function EventLayout() {
             </Link>
             <Link to={`${base}/estadisticas`} className={navClass(onStats)}>
               Stats
-            </Link>
-            <Link to={`${base}/reposicion`} className={navClass(onRestock)}>
-              Reposición
             </Link>
             <Link to={`${base}/productos`} className={navClass(onProducts)}>
               Productos

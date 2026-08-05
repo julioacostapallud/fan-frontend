@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -15,7 +15,8 @@ import {
 import { Spinner } from 'reactstrap';
 import { formatIsoDayLabel } from '../../shared/dates';
 import { formatMoney } from '../../shared/money';
-import { GENERAL_CHART, generalTooltipStyle } from './chartTheme';
+import { useTheme } from '../../shared/ThemeContext';
+import { chartThemeFor, generalTooltipStyle } from './chartTheme';
 import { useGeneralEventModel } from './useGeneralEventModel';
 import { useProfitCelebration } from './useProfitCelebration';
 
@@ -51,6 +52,9 @@ function moneyTooltipValue(v: unknown): string {
 }
 
 export function GeneralDashboard({ eventId }: { eventId: string }) {
+  const { theme } = useTheme();
+  const GENERAL_CHART = useMemo(() => chartThemeFor(theme), [theme]);
+  const tooltipStyle = useMemo(() => generalTooltipStyle(theme), [theme]);
   const { model, isLoading, error, refetch } = useGeneralEventModel(eventId);
   const [driversTab, setDriversTab] = useState<'products' | 'motifs'>('products');
 
@@ -216,7 +220,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                 }}
               />
               <Tooltip
-                contentStyle={generalTooltipStyle}
+                contentStyle={tooltipStyle}
                 labelFormatter={(_, payload) =>
                   (payload?.[0]?.payload?.label as string) ?? ''
                 }
@@ -284,7 +288,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
               />
               <ReferenceLine y={0} stroke={GENERAL_CHART.breakEven} strokeWidth={2} />
               <Tooltip
-                contentStyle={generalTooltipStyle}
+                contentStyle={tooltipStyle}
                 labelFormatter={(_, payload) =>
                   (payload?.[0]?.payload?.label as string) ?? ''
                 }
@@ -332,7 +336,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
               <XAxis dataKey="label" tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }} tickLine={false} axisLine={false} />
               <YAxis tickFormatter={axisMoney} tick={{ fill: GENERAL_CHART.axis, fontSize: 11 }} tickLine={false} axisLine={false} width={48} />
               <Tooltip
-                contentStyle={generalTooltipStyle}
+                contentStyle={tooltipStyle}
                 formatter={(v, name) => {
                   const labels: Record<string, string> = {
                     real: 'Real',
@@ -363,7 +367,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
             <div
               className="be-ring"
               style={{
-                background: `conic-gradient(${GENERAL_CHART.breakEven} ${kpis.coveragePct}%, rgba(26, 31, 36, 0.08) 0)`,
+                background: `conic-gradient(${GENERAL_CHART.breakEven} ${kpis.coveragePct}%, ${theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(26, 31, 36, 0.08)'} 0)`,
               }}
             >
               <div className="be-ring-inner">
