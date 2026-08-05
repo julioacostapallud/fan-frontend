@@ -41,6 +41,10 @@ export const api = {
       id: string,
       body: Partial<{ name: string; startDate: string; endDate: string }>,
     ) => http.patch<EventDetail>(`/events/${id}`, body),
+    remove: (id: string) =>
+      http.delete<{ id: string; deleted: boolean; salesDeleted: number }>(
+        `/events/${id}`,
+      ),
     expenses: {
       list: (eventId: string) =>
         http.get<EventExpense[]>(`/events/${eventId}/expenses`),

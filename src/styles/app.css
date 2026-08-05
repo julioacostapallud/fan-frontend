@@ -1999,8 +1999,8 @@ a {
 }
 
 .event-card {
+  position: relative;
   display: block;
-  text-decoration: none;
   color: inherit;
   background: var(--surface-1);
   border: 1px solid var(--border-subtle);
@@ -2010,11 +2010,42 @@ a {
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
-.event-card:hover,
-.event-card:focus-visible {
-  border-color: rgba(237, 23, 76, 0.45);
+.event-card-link {
+  display: block;
   color: inherit;
   text-decoration: none;
+  padding-right: 2.75rem;
+}
+
+.event-card-link:hover,
+.event-card-link:focus-visible {
+  color: inherit;
+  text-decoration: none;
+}
+
+.event-card-delete {
+  appearance: none;
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--motion), color var(--motion);
+}
+
+.event-card-delete:hover,
+.event-card-delete:focus-visible {
+  color: var(--danger);
+  background: var(--danger-soft);
+  outline: none;
 }
 
 .event-card.is-current {
@@ -2310,6 +2341,7 @@ a {
 }
 
 .event-card {
+  position: relative;
   background: var(--surface-1);
   border: none;
   border-radius: var(--radius-lg);
@@ -2318,8 +2350,7 @@ a {
   transition: transform var(--motion), background var(--motion);
 }
 
-.event-card:hover,
-.event-card:focus-visible {
+.event-card:hover {
   border-color: transparent;
   background: #fff;
   transform: translateY(-1px);
@@ -2328,6 +2359,10 @@ a {
 .event-card.is-current {
   border: none;
   box-shadow: inset 0 0 0 1.5px rgba(26, 31, 36, 0.12);
+}
+
+.event-card-link {
+  padding-right: 3rem;
 }
 
 .event-card-title {
@@ -3031,9 +3066,12 @@ html[data-theme='dark'] .sale-menu {
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55) !important;
 }
 
-html[data-theme='dark'] .event-card:hover,
-html[data-theme='dark'] .event-card:focus-visible {
+html[data-theme='dark'] .event-card:hover {
   background: var(--surface-2);
+}
+
+html[data-theme='dark'] .event-card.is-current {
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.14);
 }
 
 html[data-theme='dark'] .top-day-title {
