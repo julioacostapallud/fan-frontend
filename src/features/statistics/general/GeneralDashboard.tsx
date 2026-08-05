@@ -79,10 +79,21 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
 
   const { kpis, days, hourly, scenarios, products, motifs } = model;
   const rent = kpis.rent;
-  const breakEvenRevenue = rent > 0 && kpis.gross > 0
-    ? rent / (kpis.gross / Math.max(kpis.revenue, 1))
-    : rent / 0.6;
-  const covered = kpis.gross >= rent;
+  const expenses = rent;
+  const hasExpenses = expenses > 0;
+  const breakEvenRevenue = hasExpenses
+    ? kpis.gross > 0 && kpis.revenue > 0
+      ? expenses / (kpis.gross / kpis.revenue)
+      : expenses / 0.6
+    : Number.POSITIVE_INFINITY;
+  const covered = hasExpenses && kpis.gross >= expenses;
+  const endDayLabel = days.length
+    ? formatIsoDayLabel(days[days.length - 1]!.day)
+    : '—';
+  const marginPct =
+    kpis.revenue > 0
+      ? Math.round((kpis.gross / kpis.revenue) * 100)
+      : 60;
 
   const dayTicks = hourly.filter((h) => h.hourSlot === 0).map((h) => h.id);
 
@@ -128,7 +139,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
     <div className="general-dash">
       <p className="general-lead">
         Día comercial 06:00–06:00 · Ganancia real = contribución − gastos · Gastos{' '}
-        {formatMoney(rent)}
+        {formatMoney(expenses)}
       </p>
 
       <div className="general-kpis">
@@ -154,8 +165,12 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
         </div>
 
         <div className="general-kpis-low">
-          <Kpi title="Alquiler" value={formatMoney(kpis.rent)} />
-          <Kpi title="% cubierto" value={`${kpis.coveragePct.toFixed(0)}%`} tone="warn" />
+          <Kpi title="Gastos" value={formatMoney(expenses)} />
+          <Kpi
+            title="% cubierto"
+            value={hasExpenses ? `${kpis.coveragePct.toFixed(0)}%` : '—'}
+            tone="warn"
+          />
           <Kpi
             title="Neto proyectado"
             value={formatMoney(kpis.projectedNet)}
@@ -164,11 +179,13 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
           <Kpi
             title="Equilibrio estimado"
             value={
-              kpis.breakEvenDay
+              hasExpenses && kpis.breakEvenDay
                 ? `${formatIsoDayLabel(kpis.breakEvenDay)}${
                     kpis.breakEvenHourLabel ? ` · ${kpis.breakEvenHourLabel}` : ''
                   }`
-                : 'Sin estimar'
+                : hasExpenses
+                  ? 'Sin estimar'
+                  : 'Sin gastos'
             }
             tone="warn"
           />
@@ -204,17 +221,19 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                 axisLine={false}
                 width={48}
               />
-              <ReferenceLine
-                y={breakEvenRevenue}
-                stroke={GENERAL_CHART.breakEven}
-                strokeDasharray="6 4"
-                label={{
-                  value: 'Equilibrio',
-                  fill: GENERAL_CHART.breakEven,
-                  fontSize: 12,
-                  position: 'insideTopRight',
-                }}
-              />
+              {hasExpenses ? (
+                <ReferenceLine
+                  y={breakEvenRevenue}
+                  stroke={GENERAL_CHART.breakEven}
+                  strokeDasharray="6 4"
+                  label={{
+                    value: 'Equilibrio',
+                    fill: GENERAL_CHART.breakEven,
+                    fontSize: 12,
+                    position: 'insideTopRight',
+                  }}
+                />
+              ) : null}
               <Tooltip
                 contentStyle={tooltipStyle}
                 labelFormatter={(_, payload) =>
@@ -356,26 +375,32 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
       <section className="g-card">
         <header className="g-card-head">
           <h2>Punto de equilibrio</h2>
-          <p>Cobertura del alquiler con margen del 60%</p>
+          <p>
+            {hasExpenses
+              ? `Cobertura de los gastos con margen del ${marginPct}%`
+              : 'Cargá gastos del evento para medir la cobertura'}
+          </p>
         </header>
         <div className="be-dash">
           <div className="be-ring-wrap">
             <div
               className="be-ring"
               style={{
-                background: `conic-gradient(${GENERAL_CHART.breakEven} ${kpis.coveragePct}%, ${theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(26, 31, 36, 0.08)'} 0)`,
+                background: `conic-gradient(${GENERAL_CHART.breakEven} ${hasExpenses ? kpis.coveragePct : 0}%, ${theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(26, 31, 36, 0.08)'} 0)`,
               }}
             >
               <div className="be-ring-inner">
-                <strong>{kpis.coveragePct.toFixed(0)}%</strong>
+                <strong>{hasExpenses ? `${kpis.coveragePct.toFixed(0)}%` : '—'}</strong>
                 <span>cubierto</span>
               </div>
             </div>
           </div>
           <div className="be-copy">
-            {covered ? (
+            {!hasExpenses ? (
+              <p className="be-meta">Todavía no hay gastos cargados en este evento.</p>
+            ) : covered ? (
               <>
-                <p className="be-ok">✓ Alquiler cubierto</p>
+                <p className="be-ok">✓ Gastos cubiertos</p>
                 <p>
                   Ganancia bruta {formatMoney(kpis.gross)} · Resultado neto{' '}
                   <strong className="ok">{formatMoney(kpis.net)}</strong>
@@ -394,13 +419,15 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
                 </p>
               </>
             )}
-            {kpis.breakEvenDay ? (
+            {hasExpenses && kpis.breakEvenDay ? (
               <p className="be-estimate">
                 Equilibrio estimado {formatIsoDayLabel(kpis.breakEvenDay)}
                 {kpis.breakEvenHourLabel ? ` · ${kpis.breakEvenHourLabel}` : ''}
               </p>
             ) : null}
-            <p className="be-meta">Meta de facturación {formatMoney(breakEvenRevenue)}</p>
+            {hasExpenses ? (
+              <p className="be-meta">Meta de facturación {formatMoney(breakEvenRevenue)}</p>
+            ) : null}
           </div>
         </div>
       </section>
@@ -409,7 +436,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
       <section className="g-card">
         <header className="g-card-head">
           <h2>Escenarios de cierre</h2>
-          <p>Rango razonable hacia el 26/07 — el probable es el eje</p>
+          <p>Rango razonable hacia el {endDayLabel} — el probable es el eje</p>
         </header>
         <div className="scenario-grid">
           {scenarios.map((s) => (
@@ -443,7 +470,7 @@ export function GeneralDashboard({ eventId }: { eventId: string }) {
         </div>
         <p className="scenario-note">
           Probable ≈ {formatMoney(probable.revenue)} de facturación y{' '}
-          {formatMoney(probable.net)} de resultado neto al 26/07.
+          {formatMoney(probable.net)} de resultado neto al {endDayLabel}.
         </p>
       </section>
 

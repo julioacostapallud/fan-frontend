@@ -18,9 +18,10 @@ export interface EventModelOptions {
 }
 
 function makeEconomics(expensesTotal: number, marginRate: number) {
-  const rent = expensesTotal;
+  const rent = Math.max(0, expensesTotal);
   const margin = marginRate;
-  const breakEvenRevenue = margin > 0 ? rent / margin : Number.POSITIVE_INFINITY;
+  const breakEvenRevenue =
+    rent > 0 && margin > 0 ? rent / margin : Number.POSITIVE_INFINITY;
   const grossOf = (revenue: number) => revenue * margin;
   const netOf = (revenue: number) => grossOf(revenue) - rent;
   return { rent, margin, breakEvenRevenue, grossOf, netOf };
@@ -361,6 +362,7 @@ function findBreakEven(
   cumulativeByDay: { day: string; cum: number }[],
   breakEvenRevenue: number,
 ): { day: string; hourLabel: string } | null {
+  if (!(breakEvenRevenue > 0)) return null;
   const need = breakEvenRevenue;
   let prev = 0;
   for (const row of cumulativeByDay) {
@@ -386,6 +388,7 @@ function findBreakEvenHourly(
   hourly: HourPoint[],
   breakEvenRevenue: number,
 ): { day: string; hourLabel: string } | null {
+  if (!(breakEvenRevenue > 0)) return null;
   for (const p of hourly) {
     if (p.cumulativeProjected != null && p.cumulativeProjected >= breakEvenRevenue) {
       return {
@@ -541,16 +544,19 @@ export function buildEventModel(
   const gross =
     options.contributionNow != null ? options.contributionNow : grossOf(revenueNow);
   const net = gross - rent;
-  const coveragePct = rent > 0 ? Math.min(100, (gross / rent) * 100) : 100;
+  /** Sin gastos no hay nada que “cubrir”: 0%, no 100%. */
+  const coveragePct = rent > 0 ? Math.min(100, (gross / rent) * 100) : 0;
 
   let beFromReal: { day: string; hourLabel: string } | null = null;
-  for (const p of hourly) {
-    if (p.cumulativeReal != null && p.cumulativeReal >= breakEvenRevenue) {
-      beFromReal = {
-        day: p.day,
-        hourLabel: `${String(p.wallHour).padStart(2, '0')}:00`,
-      };
-      break;
+  if (breakEvenRevenue > 0) {
+    for (const p of hourly) {
+      if (p.cumulativeReal != null && p.cumulativeReal >= breakEvenRevenue) {
+        beFromReal = {
+          day: p.day,
+          hourLabel: `${String(p.wallHour).padStart(2, '0')}:00`,
+        };
+        break;
+      }
     }
   }
   const beFromProj = findBreakEvenHourly(hourly, breakEvenRevenue);

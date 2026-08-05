@@ -53,6 +53,19 @@ describe('event economics', () => {
     const model = buildEventModel([], OPTS, new Date('2026-07-18T15:00:00.000Z'));
     expect(model.kpis.rent).toBe(2_500_000);
     expect(model.kpis.net).toBe(-2_500_000);
+    expect(model.kpis.coveragePct).toBe(0);
+  });
+
+  it('does not mark coverage when there are no expenses', () => {
+    const model = buildEventModel(
+      [],
+      { businessDays: BUSINESS_DAYS, expensesTotal: 0, marginRate: 0.6 },
+      new Date('2026-07-18T15:00:00.000Z'),
+    );
+    expect(model.kpis.rent).toBe(0);
+    expect(model.kpis.coveragePct).toBe(0);
+    expect(model.kpis.breakEvenDay).toBeNull();
+    expect(model.kpis.grossToBreakEven).toBe(0);
   });
 });
 
