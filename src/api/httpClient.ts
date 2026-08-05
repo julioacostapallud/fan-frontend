@@ -112,8 +112,17 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 export const http = {
-  get: <T>(path: string, signal?: AbortSignal) =>
-    request<T>(path, { method: 'GET', signal }),
+  get: <T>(
+    path: string,
+    signal?: AbortSignal,
+    opts?: { auth?: boolean; timeoutMs?: number },
+  ) =>
+    request<T>(path, {
+      method: 'GET',
+      signal,
+      auth: opts?.auth,
+      timeoutMs: opts?.timeoutMs,
+    }),
   post: <T>(path: string, body: unknown, idempotencyKey?: string, auth = true) =>
     request<T>(path, { method: 'POST', body, idempotencyKey, auth }),
   patch: <T>(path: string, body: unknown) =>

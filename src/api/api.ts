@@ -24,7 +24,13 @@ import type {
 } from './types';
 
 export const api = {
-  health: () => http.get<{ status: string }>('/health'),
+  health: () => http.get<{ status: string }>('/health', undefined, { auth: false }),
+  /** Ping público para medir latencia; no usa auth. */
+  ping: () =>
+    http.get<{ ok: true; t: number }>('/health/ping', undefined, {
+      auth: false,
+      timeoutMs: 8_000,
+    }),
 
   auth: {
     login: (username: string, password: string) =>

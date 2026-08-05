@@ -60,3 +60,29 @@ export function IconMoon({ size = 18 }: { size?: number }) {
     </svg>
   );
 }
+
+/** Barras de señal 0–4 según intensidad de conexión. */
+export function IconSignal({ size = 18, bars = 0 }: { size?: number; bars?: number }) {
+  const levels = [0, 1, 2, 3] as const;
+  const heights = [5, 9, 13, 17];
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      {levels.map((i) => {
+        const h = heights[i];
+        const lit = i < bars;
+        return (
+          <rect
+            key={i}
+            x={4 + i * 5}
+            y={20 - h}
+            width="3.2"
+            height={h}
+            rx="1.2"
+            fill="currentColor"
+            opacity={lit ? 1 : 0.22}
+          />
+        );
+      })}
+    </svg>
+  );
+}

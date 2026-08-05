@@ -2962,6 +2962,60 @@ a {
   margin-top: var(--space-1);
 }
 
+/* —— Conectividad (ping) —— */
+.conn-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 10rem;
+}
+
+.conn-user .app-header-username {
+  transition: color var(--motion);
+}
+
+.conn-user.is-online .app-header-username {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.conn-user.conn-offline .app-header-username {
+  color: var(--text-muted);
+}
+
+.conn-signal {
+  display: inline-flex;
+  flex-shrink: 0;
+  transition: color var(--motion), opacity var(--motion), filter var(--motion);
+}
+
+.conn-signal.conn-excellent {
+  color: var(--success);
+  filter: brightness(1.15);
+  opacity: 1;
+}
+
+.conn-signal.conn-good {
+  color: var(--success);
+  opacity: 0.9;
+}
+
+.conn-signal.conn-fair {
+  color: var(--warning);
+  opacity: 0.85;
+}
+
+.conn-signal.conn-poor {
+  color: var(--danger);
+  opacity: 0.75;
+}
+
+.conn-signal.conn-offline {
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+
 /* —— Theme toggle —— */
 .theme-toggle-btn {
   appearance: none;

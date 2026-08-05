@@ -7,3 +7,6 @@ export const BUSINESS_TZ = 'America/Argentina/Buenos_Aires';
 export const BUSINESS_DAY_START_HOUR = 6;
 
 export const BUSINESS_DAY_MINUTES = 24 * 60;
+
+/** Intervalo de ping de conectividad en pantallas logueadas. */
+export const CONNECTION_PING_MS = 5_000;

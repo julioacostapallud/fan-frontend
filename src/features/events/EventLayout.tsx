@@ -5,6 +5,7 @@ import { api } from '../../api/api';
 import { useAuth } from '../auth/AuthContext';
 import { formatIsoDayLabel } from '../shared/dates';
 import { ThemeToggle } from '../shared/ThemeToggle';
+import { ConnectionUser } from '../shared/ConnectionUser';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 
 function navClass(active: boolean) {
@@ -15,7 +16,7 @@ function navClass(active: boolean) {
 export function EventLayout() {
   const { eventId = '' } = useParams();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const base = `/eventos/${eventId}`;
 
   const eventQuery = useQuery({
@@ -60,7 +61,7 @@ export function EventLayout() {
 
           <div className="app-header-user">
             <ThemeToggle />
-            <span className="app-header-username">{user?.displayName}</span>
+            <ConnectionUser />
             <button type="button" className="btn-ghost btn-logout" onClick={logout}>
               Salir
             </button>
