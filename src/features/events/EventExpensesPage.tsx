@@ -17,7 +17,6 @@ import type { EventExpense } from '../../api/types';
 import { formatMoney } from '../shared/money';
 import { formatIsoDayLabel } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
-import { AppHeader } from '../shared/AppHeader';
 import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 
 export function EventExpensesPage() {
@@ -120,9 +119,7 @@ export function EventExpensesPage() {
   const total = expenses.reduce((acc, e) => acc + Number(e.amount), 0);
 
   return (
-    <div className="app-shell">
-      <AppHeader eventId={eventId} />
-
+    <>
       <div className="page-header">
         <h1 className="page-title">Gastos</h1>
         <Button
@@ -134,9 +131,7 @@ export function EventExpensesPage() {
         </Button>
       </div>
 
-      <p className="text-muted mb-3">
-        {eventQuery.data?.name ?? 'Evento'} · Total {formatMoney(total)}
-      </p>
+      <p className="text-muted mb-3">Total {formatMoney(total)}</p>
 
       {expensesQuery.isLoading && <Spinner />}
 
@@ -229,6 +224,6 @@ export function EventExpensesPage() {
         onCancel={() => setDeleting(null)}
         onConfirm={confirmDelete}
       />
-    </div>
+    </>
   );
 }

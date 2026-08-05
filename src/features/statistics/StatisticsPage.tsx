@@ -8,7 +8,6 @@ import { formatIsoDayLabel, todayIsoDate } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import { TopMotifsModal } from './TopMotifsModal';
 import { GeneralDashboard } from './general/GeneralDashboard';
-import { AppHeader } from '../shared/AppHeader';
 
 type Tab = 'general' | 'hoy' | string;
 
@@ -23,7 +22,7 @@ function rangeForTab(tab: Tab): { from?: string; to?: string } {
 
 export function StatisticsPage() {
   const { eventId = '' } = useParams();
-  const [tab, setTab] = useState<Tab>('hoy');
+  const [tab, setTab] = useState<Tab>('general');
   const [topOpen, setTopOpen] = useState(false);
 
   const daysQuery = useQuery({
@@ -33,13 +32,22 @@ export function StatisticsPage() {
   });
 
   const closedDays = daysQuery.data?.days ?? [];
+  const eventStart = daysQuery.data?.eventStart;
+  const eventEnd = daysQuery.data?.eventEnd;
+  const today = daysQuery.data?.today ?? todayIsoDate();
+  const showToday =
+    Boolean(eventStart && eventEnd) && today >= eventStart! && today <= eventEnd!;
 
   useEffect(() => {
-    if (tab === 'general' || tab === 'hoy') return;
-    if (closedDays.length > 0 && !closedDays.includes(tab)) {
-      setTab('hoy');
+    if (tab === 'general') return;
+    if (tab === 'hoy') {
+      if (!showToday) setTab('general');
+      return;
     }
-  }, [closedDays, tab]);
+    if (closedDays.length > 0 && !closedDays.includes(tab)) {
+      setTab(showToday ? 'hoy' : 'general');
+    }
+  }, [closedDays, tab, showToday]);
 
   const range = useMemo(() => rangeForTab(tab), [tab]);
 
@@ -58,11 +66,9 @@ export function StatisticsPage() {
     : null;
 
   return (
-    <div className="app-shell">
-      <AppHeader eventId={eventId} />
-
+    <>
       <div className="page-header">
-        <h1 className="page-title">Stats ventas</h1>
+        <h1 className="page-title">Stats</h1>
         <Button
           type="button"
           className="btn-top-motifs ms-auto"
@@ -82,7 +88,7 @@ export function StatisticsPage() {
               setTab('general');
             }}
           >
-            General
+            Resumen
           </NavLink>
         </NavItem>
         {closedDays.map((day) => (
@@ -99,18 +105,20 @@ export function StatisticsPage() {
             </NavLink>
           </NavItem>
         ))}
-        <NavItem>
-          <NavLink
-            href="#"
-            active={tab === 'hoy'}
-            onClick={(e) => {
-              e.preventDefault();
-              setTab('hoy');
-            }}
-          >
-            Hoy
-          </NavLink>
-        </NavItem>
+        {showToday && (
+          <NavItem>
+            <NavLink
+              href="#"
+              active={tab === 'hoy'}
+              onClick={(e) => {
+                e.preventDefault();
+                setTab('hoy');
+              }}
+            >
+              Hoy
+            </NavLink>
+          </NavItem>
+        )}
       </Nav>
 
       {tab === 'general' ? (
@@ -163,6 +171,6 @@ export function StatisticsPage() {
         isOpen={topOpen}
         onClose={() => setTopOpen(false)}
       />
-    </div>
+    </>
   );
 }

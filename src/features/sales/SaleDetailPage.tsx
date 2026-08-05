@@ -22,7 +22,8 @@ function discountLabel(
 }
 
 export function SaleDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { eventId = '', saleId } = useParams<{ eventId: string; saleId: string }>();
+  const id = saleId;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
@@ -37,7 +38,7 @@ export function SaleDetailPage() {
 
   if (query.isLoading) {
     return (
-      <div className="app-shell text-center py-5">
+      <div className="text-center py-5">
         <Spinner />
       </div>
     );
@@ -51,16 +52,21 @@ export function SaleDetailPage() {
         ? query.error.message
         : 'No se encontró la venta';
     return (
-      <div className="app-shell">
+      <>
         <div className="error-banner">{message}</div>
-        <Button tag={Link} to="/" className="btn-touch btn-secondary-fan">
-          Volver
+        <Button
+          tag={Link}
+          to={eventId ? `/eventos/${eventId}` : '/'}
+          className="btn-touch btn-secondary-fan"
+        >
+          Volver a ventas
         </Button>
-      </div>
+      </>
     );
   }
 
   const sale = query.data;
+  const backTo = `/eventos/${sale.eventId || eventId}`;
   const generalDiscount = discountLabel(
     sale.generalDiscountType,
     sale.generalDiscountValue,
@@ -74,7 +80,7 @@ export function SaleDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['sales'] });
       await queryClient.invalidateQueries({ queryKey: ['stats-summary'] });
       await queryClient.invalidateQueries({ queryKey: ['stats-products'] });
-      navigate(sale.eventId ? `/eventos/${sale.eventId}` : '/');
+      navigate(backTo);
     } catch (err) {
       setDeleting(false);
       alert(err instanceof Error ? err.message : 'No se pudo eliminar');
@@ -82,12 +88,12 @@ export function SaleDetailPage() {
   }
 
   return (
-    <div className="app-shell">
+    <>
       <div className="page-header">
-        <Button tag={Link} to={`/eventos/${sale.eventId}`} color="link" className="p-0">
-          ←
+        <Button tag={Link} to={backTo} color="link" className="p-0 back-link">
+          ← Ventas
         </Button>
-        <h1>Venta</h1>
+        <h1 className="page-title">Detalle de venta</h1>
       </div>
 
       <p className="text-muted mb-2">
@@ -178,6 +184,6 @@ export function SaleDetailPage() {
         onCancel={() => setDeleteOpen(false)}
         onConfirm={confirmDelete}
       />
-    </div>
+    </>
   );
 }

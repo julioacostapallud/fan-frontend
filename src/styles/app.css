@@ -225,6 +225,66 @@ a {
   color: #fff;
 }
 
+.app-header-lobby .app-header-bar {
+  margin-bottom: 0;
+}
+
+.event-context {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.event-context-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.event-context-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.event-context-dates {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.event-context-switch {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.35rem;
+}
+
+.event-context-switch:hover,
+.event-context-switch:focus-visible {
+  color: var(--brand-hover);
+  text-decoration: underline;
+}
+
+.back-link {
+  color: var(--text-secondary) !important;
+  font-weight: 600;
+  text-decoration: none !important;
+  margin-right: var(--space-2);
+}
+
 .brand-lockup {
   display: flex;
   flex-wrap: wrap;

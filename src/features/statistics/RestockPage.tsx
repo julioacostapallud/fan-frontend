@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { Spinner, Table } from 'reactstrap';
 import { api } from '../../api/api';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
-import { AppHeader } from '../shared/AppHeader';
 
 export function RestockPage() {
   const { eventId = '' } = useParams();
@@ -22,12 +21,10 @@ export function RestockPage() {
     : null;
 
   return (
-    <div className="app-shell">
-      <AppHeader eventId={eventId} />
-
+    <>
       <h1 className="page-title">Reposición</h1>
       <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
-        Unidades vendidas por producto y motivo (todo el período).
+        Unidades vendidas por producto y motivo en este evento.
       </p>
 
       {error && (
@@ -75,6 +72,6 @@ export function RestockPage() {
           </Table>
         </div>
       )}
-    </div>
+    </>
   );
 }

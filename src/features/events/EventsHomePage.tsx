@@ -5,7 +5,7 @@ import { api } from '../../api/api';
 import { formatMoney } from '../shared/money';
 import { formatIsoDayLabel } from '../shared/dates';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
-import { AppHeader } from '../shared/AppHeader';
+import { LobbyHeader } from '../shared/LobbyHeader';
 
 export function EventsHomePage() {
   const query = useQuery({
@@ -25,28 +25,23 @@ export function EventsHomePage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <LobbyHeader />
 
-      <section className="home-hero" aria-label="Eventos">
-        <div className="home-hero-brand">
-          <img
-            src="/brand/machos-alfa-fan.png"
-            alt="Machos Alfa Fan!"
-            className="home-hero-mark"
-          />
-          <p className="home-hero-event">Eventos</p>
-        </div>
-        <div className="home-hero-actions">
-          <Button
-            tag={Link}
-            to="/eventos/nuevo"
-            color="primary"
-            className="btn-touch btn-primary-fan"
-          >
-            Agregar evento
-          </Button>
-        </div>
-      </section>
+      <div className="page-header">
+        <h1 className="page-title">Eventos</h1>
+        <Button
+          tag={Link}
+          to="/eventos/nuevo"
+          color="primary"
+          className="btn-touch btn-primary-fan ms-auto"
+        >
+          Agregar evento
+        </Button>
+      </div>
+
+      <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
+        Elegí un evento para cargar ventas, productos y gastos.
+      </p>
 
       {error && (
         <div className="error-banner">

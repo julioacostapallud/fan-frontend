@@ -7,11 +7,12 @@ import { IconEdit, IconTrash } from '../shared/Icons';
 
 interface Props {
   sale: SaleListItem;
+  eventId: string;
   onEdit: (sale: SaleListItem) => void;
   onDelete: (sale: SaleListItem) => void;
 }
 
-export function SaleCard({ sale, onEdit, onDelete }: Props) {
+export function SaleCard({ sale, eventId, onEdit, onDelete }: Props) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -42,7 +43,7 @@ export function SaleCard({ sale, onEdit, onDelete }: Props) {
       <button
         type="button"
         className="sale-row-main"
-        onClick={() => navigate(`/ventas/${sale.id}`)}
+        onClick={() => navigate(`/eventos/${eventId}/ventas/${sale.id}`)}
       >
         <div className="sale-row-top">
           <div className="sale-row-time">{formatSaleTime(sale.createdAt)}</div>

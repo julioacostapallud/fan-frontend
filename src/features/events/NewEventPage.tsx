@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button, FormGroup, Input, Label, Spinner } from 'reactstrap';
 import { api } from '../../api/api';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
-import { AppHeader } from '../shared/AppHeader';
+import { LobbyHeader } from '../shared/LobbyHeader';
 
 export function NewEventPage() {
   const navigate = useNavigate();
@@ -47,11 +47,11 @@ export function NewEventPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <LobbyHeader />
       <div className="page-header">
         <h1 className="page-title">Nuevo evento</h1>
         <Button tag={Link} to="/" className="btn-touch btn-secondary-fan ms-auto">
-          Volver
+          Volver a eventos
         </Button>
       </div>
 

@@ -1,18 +1,19 @@
-import { Link, useParams } from 'react-router-dom';
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams, useOutletContext } from 'react-router-dom';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Spinner } from 'reactstrap';
 import { useState } from 'react';
 import { api } from '../../api/api';
 import { SaleCard } from '../sales/SaleCard';
 import { NewSaleModal } from '../sales/NewSaleModal';
 import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
-import { AppHeader } from '../shared/AppHeader';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
 import type { SaleDetail, SaleListItem } from '../../api/types';
-import { formatIsoDayLabel } from '../shared/dates';
+import type { EventOutletContext } from './eventOutletContext';
 
 export function EventSalesPage() {
-  const { eventId = '' } = useParams();
+  const { eventId: paramId = '' } = useParams();
+  const outlet = useOutletContext<EventOutletContext | null>();
+  const eventId = outlet?.eventId || paramId;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<SaleDetail | null>(null);
   const [deletingSale, setDeletingSale] = useState<SaleListItem | null>(null);
@@ -20,12 +21,6 @@ export function EventSalesPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
   const queryClient = useQueryClient();
-
-  const eventQuery = useQuery({
-    queryKey: ['event', eventId],
-    queryFn: () => api.events.get(eventId),
-    enabled: Boolean(eventId),
-  });
 
   const salesQuery = useInfiniteQuery({
     queryKey: ['sales', eventId],
@@ -79,55 +74,27 @@ export function EventSalesPage() {
     }
   }
 
-  const event = eventQuery.data;
-
   return (
-    <div className="app-shell">
-      <AppHeader eventId={eventId} />
-
-      <section className="home-hero" aria-label="Acciones">
-        <div className="home-hero-brand">
-          <img
-            src="/brand/machos-alfa-fan.png"
-            alt="Machos Alfa Fan!"
-            className="home-hero-mark"
-          />
-          <p className="home-hero-event">{event?.name ?? 'Evento'}</p>
-          {event && (
-            <p className="home-hero-dates">
-              {formatIsoDayLabel(event.startDate)} — {formatIsoDayLabel(event.endDate)}
-            </p>
-          )}
-        </div>
-
-        <div className="home-hero-actions">
-          <Button
-            color="primary"
-            className="btn-touch btn-primary-fan"
-            onClick={() => {
-              setEditingSale(null);
-              setModalOpen(true);
-            }}
-          >
-            Nueva venta
-          </Button>
-          <Button
-            tag={Link}
-            to={`/eventos/${eventId}/estadisticas`}
-            className="btn-touch btn-secondary-fan"
-          >
-            Stats ventas
-          </Button>
-        </div>
-      </section>
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Ventas</h1>
+        <Button
+          color="primary"
+          className="btn-touch btn-primary-fan ms-auto"
+          onClick={() => {
+            setEditingSale(null);
+            setModalOpen(true);
+          }}
+        >
+          Nueva venta
+        </Button>
+      </div>
 
       {savedFlash && (
         <div className="flash-ok" role="status">
           Venta guardada
         </div>
       )}
-
-      <h2 className="section-title">Ventas</h2>
 
       {(errorMessage || actionError) && (
         <div className="error-banner">
@@ -164,6 +131,7 @@ export function EventSalesPage() {
           <SaleCard
             key={sale.id}
             sale={sale}
+            eventId={eventId}
             onEdit={openEdit}
             onDelete={setDeletingSale}
           />
@@ -213,6 +181,6 @@ export function EventSalesPage() {
         onCancel={() => setDeletingSale(null)}
         onConfirm={confirmDelete}
       />
-    </div>
+    </>
   );
 }

@@ -16,7 +16,6 @@ import { api } from '../../api/api';
 import type { EventProduct, ImportableProduct } from '../../api/types';
 import { formatMoney } from '../shared/money';
 import { ApiError, NetworkError, TimeoutError } from '../../api/httpClient';
-import { AppHeader } from '../shared/AppHeader';
 
 type Mode = 'create' | 'import' | 'edit';
 
@@ -161,8 +160,13 @@ export function AdminPage() {
       : null;
 
   return (
-    <div className="app-shell">
-      <AppHeader eventId={eventId} />
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Productos</h1>
+      </div>
+      <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
+        Costo y precio de venta de este evento.
+      </p>
 
       <FormGroup>
         <Input
@@ -342,6 +346,6 @@ export function AdminPage() {
           </Button>
         </ModalFooter>
       </Modal>
-    </div>
+    </>
   );
 }
